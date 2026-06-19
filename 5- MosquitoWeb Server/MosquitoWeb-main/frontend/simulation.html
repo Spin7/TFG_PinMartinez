@@ -1,0 +1,2286 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulation Model — MosquitoAI</title>
+    <meta name="description"
+        content="Generador interactivo de grillas de simulación ambiental a partir de mapas satelitales OpenStreetMap para el modelo ABM de mosquitos.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <!-- MathJax for equation rendering -->
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['\\(', '\\)']],
+                displayMath: [['\\[', '\\]']],
+                packages: { '[+]': ['ams'] }
+            },
+            options: { skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre'] }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" crossorigin="anonymous" async></script>
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #1d4ed8;
+            --primary-light: #eff6ff;
+            --accent: #0284c7;
+            --dark: #1f2937;
+            --text: #475569;
+            --text-sub: #64748b;
+            --bg: #eef2f5;
+            --card-bg: #ffffff;
+            --border: #e2e8f0;
+            --border-blue: rgba(59, 130, 246, 0.25);
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            width: 60vw;
+            height: 60vw;
+            max-width: 700px;
+            max-height: 700px;
+            transform: translate(-50%, -50%);
+            background: url("static/logo.jpg") no-repeat center;
+            background-size: contain;
+            opacity: 0.04;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ===== NAVBAR ===== */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 58px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 16px;
+            color: var(--dark);
+            text-decoration: none;
+        }
+
+        .nav-logo img {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            object-fit: cover;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: var(--text);
+            text-decoration: none;
+            padding: 7px 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .nav-links a:hover {
+            background: #f1f5f9;
+            color: var(--dark);
+        }
+
+        .nav-links a.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            cursor: pointer;
+            padding: 6px;
+            border: none;
+            background: transparent;
+        }
+
+        .hamburger span {
+            display: block;
+            width: 22px;
+            height: 2px;
+            background: var(--dark);
+            border-radius: 2px;
+            transition: all .3s;
+        }
+
+        .hamburger.open span:nth-child(1) {
+            transform: translateY(7px) rotate(45deg);
+        }
+
+        .hamburger.open span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .hamburger.open span:nth-child(3) {
+            transform: translateY(-7px) rotate(-45deg);
+        }
+
+        @media (max-width: 760px) {
+            .hamburger {
+                display: flex;
+            }
+
+            .nav-links {
+                display: none;
+                flex-direction: column;
+                gap: 2px;
+                position: fixed;
+                top: 58px;
+                left: 0;
+                right: 0;
+                background: white;
+                border-bottom: 1px solid var(--border);
+                padding: 10px 16px 16px;
+                box-shadow: 0 4px 16px rgba(0, 0, 0, .08);
+                z-index: 99;
+            }
+
+            .nav-links.open {
+                display: flex;
+            }
+
+            .nav-links a {
+                padding: 10px 14px;
+                border-radius: 8px;
+                width: 100%;
+            }
+        }
+
+        /* ===== PAGE HEADER ===== */
+        .page-header {
+            position: relative;
+            z-index: 1;
+            padding: 110px 24px 56px;
+            text-align: center;
+            background: linear-gradient(180deg, white 0%, var(--bg) 100%);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .page-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            color: var(--primary);
+            padding: 6px 16px;
+            border-radius: 50px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .page-badge::before {
+            content: '';
+            width: 7px;
+            height: 7px;
+            background: var(--primary);
+            border-radius: 50%;
+            animation: pulse 1.8s infinite;
+        }
+
+        .page-header h1 {
+            font-size: clamp(28px, 4.5vw, 52px);
+            font-weight: 800;
+            color: var(--dark);
+            line-height: 1.15;
+            margin-bottom: 14px;
+        }
+
+        .page-header h1 span {
+            color: var(--primary);
+        }
+
+        .page-header p {
+            margin: 16px auto 0;
+            max-width: 620px;
+            font-size: clamp(14px, 2vw, 16.5px);
+            color: var(--text-sub);
+            line-height: 1.75;
+        }
+
+        /* ===== MAIN LAYOUT ===== */
+        .page-content {
+            position: relative;
+            z-index: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 52px 24px 80px;
+        }
+
+        /* ===== DESCRIPTION STRIP ===== */
+        .description-strip {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px 32px;
+            margin-bottom: 32px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            animation: fadeDown 0.7s 0.1s ease both;
+        }
+
+        .description-strip h2 {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .description-strip p {
+            color: var(--text);
+            font-size: 14.5px;
+            line-height: 1.8;
+            margin-bottom: 14px;
+        }
+
+        .description-strip p:last-child {
+            margin-bottom: 0;
+        }
+
+        .cell-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 18px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 5px 12px;
+            font-size: 13px;
+            color: var(--dark);
+            font-weight: 500;
+        }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+            flex-shrink: 0;
+        }
+
+        /* ===== GENERATOR CARD ===== */
+        .generator-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px 32px;
+            margin-bottom: 32px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            animation: fadeDown 0.7s 0.15s ease both;
+        }
+
+        .generator-card h2 {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 22px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 18px;
+            margin-bottom: 24px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group label {
+            font-size: 12.5px;
+            font-weight: 600;
+            color: var(--text-sub);
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+        }
+
+        .form-group input {
+            padding: 10px 14px;
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            font-size: 14.5px;
+            font-family: 'Inter', sans-serif;
+            color: var(--dark);
+            background: #f8fafc;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            outline: none;
+        }
+
+        .form-group input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+            background: white;
+        }
+
+        .form-hint {
+            font-size: 11.5px;
+            color: var(--text-sub);
+            margin-top: 3px;
+        }
+
+        .generate-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--primary);
+            color: white;
+            padding: 12px 28px;
+            border-radius: 10px;
+            border: none;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35);
+            font-family: 'Inter', sans-serif;
+        }
+
+        .generate-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.45);
+        }
+
+        .generate-btn:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* ===== PROGRESS ===== */
+        .progress-area {
+            display: none;
+            margin-top: 20px;
+            background: #f0f9ff;
+            border: 1px solid #bae6fd;
+            border-radius: 12px;
+            padding: 16px 20px;
+        }
+
+        .progress-area.visible {
+            display: block;
+        }
+
+        .progress-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #0369a1;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .spinner {
+            width: 14px;
+            height: 14px;
+            border: 2px solid #bae6fd;
+            border-top-color: #0369a1;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            flex-shrink: 0;
+        }
+
+        .progress-bar-outer {
+            background: #bae6fd;
+            border-radius: 6px;
+            height: 6px;
+            overflow: hidden;
+        }
+
+        .progress-bar-inner {
+            height: 100%;
+            background: #0284c7;
+            border-radius: 6px;
+            transition: width 0.4s ease;
+            width: 0%;
+        }
+
+        .progress-steps {
+            margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .progress-step {
+            font-size: 11.5px;
+            padding: 3px 10px;
+            border-radius: 20px;
+            border: 1px solid #bae6fd;
+            color: #0369a1;
+            background: white;
+            transition: all 0.3s;
+        }
+
+        .progress-step.done {
+            background: #0369a1;
+            color: white;
+            border-color: #0369a1;
+        }
+
+        .progress-step.active {
+            background: #eff6ff;
+            border-color: #3b82f6;
+            color: #1d4ed8;
+            font-weight: 600;
+        }
+
+        /* ===== ERROR BOX ===== */
+        .error-box {
+            display: none;
+            margin-top: 20px;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 12px;
+            padding: 14px 18px;
+            font-size: 13.5px;
+            color: #b91c1c;
+        }
+
+        .error-box.visible {
+            display: block;
+        }
+
+        /* ===== PREVIEW SECTION ===== */
+        .preview-section {
+            margin-bottom: 32px;
+            animation: fadeDown 0.7s 0.2s ease both;
+        }
+
+        .preview-section-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .preview-badge {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            color: var(--primary);
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .preview-note {
+            font-size: 12.5px;
+            color: var(--text-sub);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* ===== LIVE RESULTS ===== */
+        .results-section {
+            display: none;
+            animation: fadeDown 0.6s ease both;
+        }
+
+        .results-section.visible {
+            display: block;
+        }
+
+        .results-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .results-badge {
+            background: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            color: #065f46;
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        @media (max-width: 640px) {
+            .comparison-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .result-panel {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            transition: box-shadow 0.3s;
+        }
+
+        .result-panel:hover {
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.12);
+        }
+
+        .result-panel-header {
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .result-panel-header h3 {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .result-panel-header span {
+            margin-left: auto;
+            font-size: 12px;
+            color: var(--text-sub);
+        }
+
+        .result-panel img {
+            width: 100%;
+            display: block;
+            max-height: 480px;
+            object-fit: contain;
+            background: #f8fafc;
+        }
+
+        .preview-panel {
+            background: white;
+            border: 1.5px solid #dbeafe;
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 2px 12px rgba(59, 130, 246, 0.08);
+            transition: box-shadow 0.3s, transform 0.3s;
+        }
+
+        .preview-panel:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 28px rgba(59, 130, 246, 0.15);
+        }
+
+        .preview-panel-header {
+            padding: 14px 18px;
+            border-bottom: 1px solid #dbeafe;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(90deg, #eff6ff, #f0f9ff);
+        }
+
+        .preview-panel-header h3 {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .preview-panel-header .panel-sub {
+            margin-left: auto;
+            font-size: 11.5px;
+            color: var(--text-sub);
+            background: white;
+            border: 1px solid var(--border);
+            padding: 2px 9px;
+            border-radius: 20px;
+        }
+
+        .preview-panel img {
+            width: 100%;
+            display: block;
+            max-height: 500px;
+            object-fit: contain;
+            background: #f8fafc;
+        }
+
+        /* ===== CONFIG SUMMARY ===== */
+        .config-summary {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 20px 24px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px;
+        }
+
+        .config-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .config-item .config-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-sub);
+        }
+
+        .config-item .config-val {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        /* ===== HOW IT WORKS ===== */
+        .how-section {
+            margin-top: 40px;
+            animation: fadeDown 0.7s 0.2s ease both;
+        }
+
+        .how-section h2 {
+            font-size: 19px;
+            font-weight: 800;
+            color: var(--dark);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .step-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 22px 20px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+            transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
+            position: relative;
+        }
+
+        .step-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.1);
+            border-color: var(--border-blue);
+        }
+
+        .step-num {
+            width: 32px;
+            height: 32px;
+            background: var(--primary);
+            border-radius: 50%;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 14px;
+        }
+
+        .step-card h3 {
+            font-size: 14.5px;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 7px;
+        }
+
+        .step-card p {
+            font-size: 13px;
+            color: var(--text-sub);
+            line-height: 1.65;
+        }
+
+        /* ===== ABM MODEL SECTION ===== */
+        .abm-section {
+            margin-top: 52px;
+        }
+
+        .abm-section-title {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--dark);
+            margin-bottom: 6px;
+            text-align: center;
+        }
+
+        .abm-section-sub {
+            text-align: center;
+            font-size: 14px;
+            color: var(--text-sub);
+            margin-bottom: 36px;
+            max-width: 680px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.7;
+        }
+
+        .abm-intro {
+            background: linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%);
+            border: 1px solid #bfdbfe;
+            border-radius: 16px;
+            padding: 28px 32px;
+            margin-bottom: 28px;
+            font-size: 14.5px;
+            color: var(--text);
+            line-height: 1.85;
+        }
+
+        .abm-intro strong {
+            color: var(--primary-dark);
+        }
+
+        .abm-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 18px;
+            margin-bottom: 28px;
+        }
+
+        .abm-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 22px 22px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
+        }
+
+        .abm-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.1);
+            border-color: var(--border-blue);
+        }
+
+        .states-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 28px;
+        }
+
+        .state-chip {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: white;
+            border: 1.5px solid var(--border);
+            border-radius: 12px;
+            padding: 12px 18px;
+            transition: all 0.25s;
+            cursor: default;
+            flex: 1;
+            min-width: 160px;
+        }
+
+        .state-chip:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+        }
+
+        .state-symbol {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            font-weight: 800;
+            flex-shrink: 0;
+            font-family: 'Georgia', serif;
+        }
+
+        .state-info {
+            min-width: 0;
+        }
+
+        .state-info .state-label {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .state-info .state-desc {
+            font-size: 11.5px;
+            color: var(--text-sub);
+            margin-top: 2px;
+        }
+
+        .eq-block {
+            background: white;
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--primary);
+            border-radius: 0 12px 12px 0;
+            padding: 20px 24px;
+            margin: 16px 0;
+            font-size: 14px;
+            color: var(--dark);
+            overflow-x: auto;
+        }
+
+        .eq-block .eq-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            margin-bottom: 10px;
+        }
+
+        .abm-sub {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 26px 30px;
+            margin-bottom: 22px;
+            box-shadow: 0 1px 6px rgba(0, 0, 0, 0.04);
+        }
+
+        .abm-sub h3 {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .abm-sub p {
+            font-size: 14px;
+            color: var(--text);
+            line-height: 1.8;
+            margin-bottom: 10px;
+        }
+
+        .abm-sub p:last-child {
+            margin-bottom: 0;
+        }
+
+        .params-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            margin-top: 10px;
+        }
+
+        .params-table th {
+            background: var(--primary-light);
+            color: var(--primary-dark);
+            padding: 9px 14px;
+            text-align: left;
+            font-size: 11.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .params-table th:first-child {
+            border-radius: 8px 0 0 0;
+        }
+
+        .params-table th:last-child {
+            border-radius: 0 8px 0 0;
+        }
+
+        .params-table td {
+            padding: 9px 14px;
+            border-bottom: 1px solid #f1f5f9;
+            color: var(--dark);
+            vertical-align: middle;
+        }
+
+        .params-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .params-table tr:hover td {
+            background: #f8fafc;
+        }
+
+        .param-sym {
+            font-family: 'Georgia', Georgia, serif;
+            font-style: italic;
+            font-weight: 700;
+            color: var(--primary-dark);
+        }
+
+        .example-val {
+            font-size: 12px;
+            color: #059669;
+            font-weight: 600;
+        }
+
+        .abm-conclusion {
+            background: linear-gradient(135deg, #f0fdf4, #ecfdf5);
+            border: 1px solid #a7f3d0;
+            border-radius: 14px;
+            padding: 22px 28px;
+            margin-top: 8px;
+            font-size: 14px;
+            color: #065f46;
+            line-height: 1.8;
+        }
+
+        .abm-conclusion strong {
+            color: #047857;
+        }
+
+        @media (max-width: 640px) {
+            .abm-sub {
+                padding: 18px 18px;
+            }
+
+            .abm-intro {
+                padding: 20px 20px;
+            }
+
+            .states-grid {
+                flex-direction: column;
+            }
+        }
+
+        /* ===== RESULTADOS SECTION ===== */
+        .resultados-section {
+            margin-top: 60px;
+        }
+
+        .resultados-header {
+            text-align: center;
+            margin-bottom: 36px;
+        }
+
+        .resultados-badge {
+            display: inline-block;
+            background: linear-gradient(90deg, #eff6ff, #ecfdf5);
+            border: 1px solid #a7f3d0;
+            color: #065f46;
+            padding: 5px 18px;
+            border-radius: 50px;
+            font-size: 11.5px;
+            font-weight: 700;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+            margin-bottom: 14px;
+        }
+
+        .resultados-title {
+            font-size: clamp(22px, 3.5vw, 32px);
+            font-weight: 800;
+            color: var(--dark);
+            margin-bottom: 12px;
+        }
+
+        .resultados-title span {
+            color: var(--primary);
+        }
+
+        .resultados-sub {
+            max-width: 640px;
+            margin: 0 auto;
+            font-size: 14.5px;
+            color: var(--text-sub);
+            line-height: 1.75;
+        }
+
+        .res-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 14px;
+            margin-bottom: 32px;
+        }
+
+        .res-stat-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 20px 18px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            transition: transform 0.25s, box-shadow 0.25s;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .res-stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.10);
+        }
+
+        .res-stat-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 17px;
+            margin-bottom: 4px;
+        }
+
+        .res-stat-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-sub);
+        }
+
+        .res-stat-value {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--dark);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .res-stat-sub {
+            font-size: 11.5px;
+            color: var(--text-sub);
+            margin-top: 2px;
+        }
+
+        .res-chart-pair {
+            display: grid;
+            grid-template-columns: 3fr 2fr;
+            gap: 24px;
+            margin-bottom: 28px;
+        }
+
+        @media (max-width: 800px) {
+            .res-chart-pair {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .res-panel {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            transition: box-shadow 0.3s, transform 0.3s;
+        }
+
+        .res-panel:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.12);
+        }
+
+        .res-panel-header {
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--border);
+            background: linear-gradient(90deg, #f8fafc, #eff6ff);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .res-panel-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            background: var(--primary-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            flex-shrink: 0;
+        }
+
+        .res-panel-header h3 {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .res-panel-header span {
+            margin-left: auto;
+            font-size: 11.5px;
+            color: var(--text-sub);
+            background: white;
+            border: 1px solid var(--border);
+            padding: 2px 10px;
+            border-radius: 20px;
+        }
+
+        .res-panel img {
+            width: 100%;
+            display: block;
+            background: #f8fafc;
+            object-fit: contain;
+        }
+
+        .res-panel-loading {
+            padding: 48px 24px;
+            text-align: center;
+            color: var(--text-sub);
+            font-size: 13.5px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .res-spinner {
+            width: 28px;
+            height: 28px;
+            border: 3px solid #bae6fd;
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .res-error-note {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 10px;
+            padding: 12px 16px;
+            font-size: 13px;
+            color: #b91c1c;
+            margin: 12px 20px;
+        }
+
+        .state-breakdown {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 22px 26px;
+            margin-top: 8px;
+        }
+
+        .state-breakdown h4 {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 16px;
+        }
+
+        .state-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .state-bar-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .state-bar-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--dark);
+            min-width: 110px;
+        }
+
+        .state-bar-outer {
+            flex: 1;
+            background: #f1f5f9;
+            border-radius: 6px;
+            height: 10px;
+            overflow: hidden;
+        }
+
+        .state-bar-inner {
+            height: 100%;
+            border-radius: 6px;
+            transition: width 1s ease;
+        }
+
+        .state-bar-count {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--dark);
+            min-width: 40px;
+            text-align: right;
+        }
+
+        /* ===== FOOTER ===== */
+        footer {
+            position: relative;
+            z-index: 1;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            padding: 28px 20px;
+            color: var(--text-sub);
+            font-size: 13px;
+            background: white;
+        }
+
+        /* ===== ANIMATIONS ===== */
+        @keyframes fadeDown {
+            from {
+                opacity: 0;
+                transform: translateY(-16px);
+            }
+
+            to {
+                opacity: 1;
+                transform: none;
+            }
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: .5;
+                transform: scale(.8);
+            }
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(22px);
+            transition: opacity .6s ease, transform .6s ease;
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: none;
+        }
+
+        .reveal-d1 {
+            transition-delay: .08s;
+        }
+
+        .reveal-d2 {
+            transition-delay: .16s;
+        }
+
+        .reveal-d3 {
+            transition-delay: .24s;
+        }
+
+        .reveal-d4 {
+            transition-delay: .32s;
+        }
+    </style>
+    <script src="config.js"></script>
+</head>
+
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="navbar">
+        <a href="home.html" class="nav-logo">
+            <img src="static/logo.jpg" alt="Logo">
+            MosquitoAI
+        </a>
+        <button class="hamburger" id="hamburger" aria-label="Menu">
+            <span></span><span></span><span></span>
+        </button>
+        <div class="nav-links" id="nav-links">
+            <a href="home.html">Home</a>
+            <a href="about.html">Proyecto</a>
+            <a href="model.html">Modelo IA</a>
+            <a href="simulation.html" class="active">Simulaci&#243;n</a>
+            <a href="dashboard.html">Dashboard</a>
+        </div>
+    </nav>
+
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+        <h1>Simulador <span>ABM</span></h1>
+        <p>
+            Plataforma que genera una grilla georreferenciada a partir de OpenStreetMap
+            y ejecuta sobre ella un modelo basado en agentes (ABM) que simula la dispersión de
+            <em>Aedes aegypti</em> con reglas de movimiento, reproducción y mortalidad diferenciadas
+            por tipo de terreno.
+        </p>
+    </div>
+
+    <div class="page-content">
+
+        <!-- DESCRIPTION STRIP -->
+        <div class="description-strip reveal">
+            <h2>&#191;Qu&#233; es el Grid Generator?</h2>
+            <p>
+                El <strong>Grid Generator</strong> es un componente clave del modelo de simulaci&#243;n basado en
+                agentes (ABM)
+                desarrollado en este Trabajo Final de Grado. A partir de una ubicaci&#243;n geogr&#225;fica y
+                par&#225;metros de &#225;rea,
+                descarga datos vectoriales de <strong>OSM (OpenStreetMap)</strong> &#8212; calles, edificios,
+                vegetaci&#243;n y
+                cuerpos de agua &#8212; y los rasteriza sobre una grilla regular de celdas cuadradas.
+            </p>
+            <p>
+                Cada celda queda asignada a una de las siguientes clases seg&#250;n el contenido geoespacial que la
+                cubre.
+                La grilla resultante es el entorno sobre el cual se ejecuta la simulaci&#243;n de dispersi&#243;n de
+                mosquitos
+                (<em>Aedes aegypti</em>), con reglas de movimiento diferenciadas seg&#250;n el tipo de terreno.
+            </p>
+            <div class="cell-legend">
+                <div class="legend-item"><span class="legend-dot"
+                        style="background:#f2efe9;border:1px solid #ccc;"></span>0 &#8212; Espacio vac&#237;o</div>
+                <div class="legend-item"><span class="legend-dot" style="background:#646464;"></span>1 &#8212; Calle
+                </div>
+                <div class="legend-item"><span class="legend-dot" style="background:#009600;"></span>2 &#8212;
+                    Vegetaci&#243;n</div>
+                <div class="legend-item"><span class="legend-dot" style="background:#0000ff;"></span>3 &#8212; Agua
+                </div>
+                <div class="legend-item"><span class="legend-dot" style="background:#8b4513;"></span>4 &#8212; Edificio
+                </div>
+                <div class="legend-item"><span class="legend-dot" style="background:#ff00ff;"></span>5 &#8212; Trampa
+                </div>
+            </div>
+        </div>
+
+        <!-- GENERATOR CARD -->
+        <div class="generator-card reveal reveal-d1">
+            <h2>&ensp; Generar Grilla desde Mapa Satelital</h2>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="lat">Latitud centro</label>
+                    <input type="number" id="lat" step="0.0001" value="-25.2637" min="-90" max="90">
+                    <div class="form-hint">Ej: &#8722;25.2637 (Asunci&#243;n, PY)</div>
+                </div>
+                <div class="form-group">
+                    <label for="lon">Longitud centro</label>
+                    <input type="number" id="lon" step="0.0001" value="-57.5759" min="-180" max="180">
+                    <div class="form-hint">Ej: &#8722;57.5759 (Asunci&#243;n, PY)</div>
+                </div>
+                <div class="form-group">
+                    <label for="mapsize">Tama&#241;o del &#225;rea (m)</label>
+                    <input type="number" id="mapsize" step="50" value="500" min="100" max="3000">
+                    <div class="form-hint">Ancho/alto del cuadrado en metros</div>
+                </div>
+                <div class="form-group">
+                    <label for="cellsize">Tama&#241;o de celda (m)</label>
+                    <input type="number" id="cellsize" step="1" value="5" min="1" max="50">
+                    <div class="form-hint">Resoluci&#243;n espacial de la grilla</div>
+                </div>
+            </div>
+
+            <button class="generate-btn" id="generateBtn" onclick="generateGrid()">
+                Generar Grilla
+            </button>
+
+            <!-- PROGRESS -->
+            <div class="progress-area" id="progressArea">
+                <div class="progress-label">
+                    <div class="spinner"></div>
+                    <span id="progressLabel">Iniciando...</span>
+                </div>
+                <div class="progress-bar-outer">
+                    <div class="progress-bar-inner" id="progressBar"></div>
+                </div>
+                <div class="progress-steps" id="progressSteps">
+                    <span class="progress-step" id="step-osm">Descargando OSM</span>
+                    <span class="progress-step" id="step-sat">Imagen satelital</span>
+                    <span class="progress-step" id="step-grid">Generando grilla</span>
+                    <span class="progress-step" id="step-render">Renderizando</span>
+                </div>
+            </div>
+
+            <!-- ERROR -->
+            <div class="error-box" id="errorBox"></div>
+        </div>
+
+        <!-- DEFAULT PREVIEW -->
+        <div class="preview-section reveal reveal-d1" id="previewSection">
+            <div class="preview-section-header">
+                <h2 style="font-size:19px;font-weight:800;color:var(--dark);">Vista Previa del Grid Generator</h2>
+                <span class="preview-badge">Ejemplo precargado</span>
+            </div>
+            <p class="preview-note" style="margin-bottom:16px;">
+                Muestra de referencia &#8212; Asunci&#243;n, PY &middot; &asymp;1000 &times; 1000&thinsp;m &middot;
+                celda 3&thinsp;m &middot; 333 &times; 333 celdas.
+                Us&#225; el formulario de arriba para generar tu propia grilla personalizada.
+            </p>
+            <div class="comparison-grid">
+                <div class="preview-panel">
+                    <div class="preview-panel-header">
+                        <h3>Imagen Satelital de Referencia</h3>
+                        <span class="panel-sub">Esri World Imagery</span>
+                    </div>
+                    <img src="static/satellite_preview.png"
+                        alt="Imagen satelital de referencia &#8212; Asunci&#243;n PY" loading="lazy">
+                </div>
+                <div class="preview-panel">
+                    <div class="preview-panel-header">
+                        <h3>Grilla de Simulaci&#243;n Generada</h3>
+                        <span class="panel-sub">333 &times; 333 celdas &middot; 3&thinsp;m</span>
+                    </div>
+                    <img src="static/grid_preview.png"
+                        alt="Grilla de simulaci&#243;n generada &#8212; Asunci&#243;n PY" loading="lazy">
+                </div>
+            </div>
+        </div>
+
+        <!-- LIVE RESULTS (after generation) -->
+        <div class="results-section" id="resultsSection">
+            <div class="results-header">
+                <h2 style="font-size:19px;font-weight:800;color:var(--dark);">Resultados</h2>
+                <span class="results-badge">Generaci&#243;n completada</span>
+            </div>
+            <div class="config-summary" id="configSummary" style="margin-bottom:20px;">
+                <!-- filled by JS -->
+            </div>
+            <div class="comparison-grid">
+                <div class="result-panel">
+                    <div class="result-panel-header">
+                        <h3>Imagen Satelital</h3>
+                        <span>Esri World Imagery</span>
+                    </div>
+                    <img id="satImg" src="" alt="Imagen satelital">
+                </div>
+                <div class="result-panel">
+                    <div class="result-panel-header">
+                        <h3>Grilla Generada</h3>
+                        <span id="gridLabel">&#8212;</span>
+                    </div>
+                    <img id="gridImg" src="" alt="Grilla generada">
+                </div>
+            </div>
+        </div>
+
+        <!-- HOW IT WORKS -->
+        <div class="how-section reveal reveal-d2">
+            <h2>&#191;C&#243;mo funciona el proceso?</h2>
+            <div class="steps-grid">
+                <div class="step-card reveal">
+                    <div class="step-num">1</div>
+                    <h3>Descarga OSM</h3>
+                    <p>Se descargan geometr&#237;as vectoriales (pol&#237;gonos de edificios, agua, vegetaci&#243;n y
+                        l&#237;neas de calles) desde la API de osmnx.</p>
+                </div>
+                <div class="step-card reveal reveal-d1">
+                    <div class="step-num">2</div>
+                    <h3>Imagen satelital</h3>
+                    <p>Se obtiene una imagen de referencia del &#225;rea utilizando <strong>contextily</strong> con el
+                        proveedor Esri WorldImagery.</p>
+                </div>
+                <div class="step-card reveal reveal-d2">
+                    <div class="step-num">3</div>
+                    <h3>Rasterizaci&#243;n</h3>
+                    <p>Cada celda de la grilla es intersectada con los pol&#237;gonos. Se asigna el tipo seg&#250;n la
+                        cobertura dominante y prioridad.</p>
+                </div>
+                <div class="step-card reveal reveal-d3">
+                    <div class="step-num">4</div>
+                    <h3>Exportaci&#243;n</h3>
+                    <p>La grilla se exporta como array NumPy (<code>.npy</code>) y configuraci&#243;n JSON lista para
+                        usar en el simulador ABM.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== ABM MODEL SECTION ===== -->
+        <div class="abm-section">
+            <h2 class="abm-section-title reveal">Modelo ABM de Dispersi&#243;n de <span
+                    style="color:var(--primary)">Mosquitos</span></h2>
+            <p class="abm-section-sub reveal reveal-d1">
+                Definici&#243;n formal del modelo basado en agentes (<em>Agent-Based Model</em>) implementado
+                sobre la grilla generada. Las secciones siguientes detallan el entorno, los estados de los agentes
+                y todas las reglas din&#225;micas en t&#233;rminos matem&#225;ticos abstractos,
+                en l&#237;nea con la formulaci&#243;n de reacci&#243;n&#8211;difusi&#243;n discreta.
+            </p>
+
+            <!-- 1. ENVIRONMENT -->
+            <div class="abm-sub reveal reveal-d1">
+                <h3>1 &middot; Descripci&#243;n del Entorno</h3>
+                <p>
+                    El entorno es una <strong>ret&#237;cula discreta rectangular</strong>
+                    \(\mathcal{G} \subset \mathbb{Z}^2\) de dimensiones \(H \times W\) celdas.
+                    A cada celda \(y \in \mathcal{G}\) se le asigna un tipo de terreno
+                    \(c(y) \in \{0,1,2,3,4\}\):
+                </p>
+                <div
+                    style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:16px 0;">
+                    <div
+                        style="display:flex;align-items:center;gap:10px;background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:10px 14px;">
+                        <span
+                            style="width:18px;height:18px;border-radius:4px;background:#f2efe9;border:1px solid #ccc;flex-shrink:0;display:inline-block;"></span>
+                        <div><strong style="font-size:13px;">\(c(y)=0\) &mdash; Espacio vac&#237;o</strong><br><span
+                                style="font-size:11.5px;color:var(--text-sub);">Transitable sin restricci&#243;n</span>
+                        </div>
+                    </div>
+                    <div
+                        style="display:flex;align-items:center;gap:10px;background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:10px 14px;">
+                        <span
+                            style="width:18px;height:18px;border-radius:4px;background:#646464;flex-shrink:0;display:inline-block;"></span>
+                        <div><strong style="font-size:13px;">\(c(y)=1\) &mdash; Calle</strong><br><span
+                                style="font-size:11.5px;color:var(--text-sub);">Prohibido para adultos</span></div>
+                    </div>
+                    <div
+                        style="display:flex;align-items:center;gap:10px;background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:10px 14px;">
+                        <span
+                            style="width:18px;height:18px;border-radius:4px;background:#009600;flex-shrink:0;display:inline-block;"></span>
+                        <div><strong style="font-size:13px;">\(c(y)=2\) &mdash; Vegetaci&#243;n</strong><br><span
+                                style="font-size:11.5px;color:var(--text-sub);">Soporte de sitios de cr&#237;a
+                                aleatorios</span></div>
+                    </div>
+                    <div
+                        style="display:flex;align-items:center;gap:10px;background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:10px 14px;">
+                        <span
+                            style="width:18px;height:18px;border-radius:4px;background:#0000ff;flex-shrink:0;display:inline-block;"></span>
+                        <div><strong style="font-size:13px;">\(c(y)=3\) &mdash; Agua</strong><br><span
+                                style="font-size:11.5px;color:var(--text-sub);">Prohibido para adultos</span></div>
+                    </div>
+                    <div
+                        style="display:flex;align-items:center;gap:10px;background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:10px 14px;">
+                        <span
+                            style="width:18px;height:18px;border-radius:4px;background:#8b4513;flex-shrink:0;display:inline-block;"></span>
+                        <div><strong style="font-size:13px;">\(c(y)=4\) &mdash; Edificio</strong><br><span
+                                style="font-size:11.5px;color:var(--text-sub);">No atravesable por adultos</span></div>
+                    </div>
+                </div>
+                <p>
+                    Se define el conjunto de tipos <strong>prohibidos</strong>
+                    \(\mathcal{C}_{\text{prhb}} = \{1,\,3\}\). Las fronteras son
+                    <strong>reflectivas</strong>: toda posici&#243;n fuera de \(\mathcal{G}\) se recorta
+                    al borde m&#225;s cercano.
+                </p>
+                <p>
+                    Un subconjunto finito
+                    \(\mathcal{S} = \{s_1,\dots,s_m\} \subset \mathcal{G}\)
+                    define los <strong>sitios de cr&#237;a</strong>, cargados desde coordenadas GPS reales
+                    o generados aleatoriamente sobre celdas de vegetaci&#243;n (\(c(y)=2\)).
+                    Ning&#250;n sitio de cr&#237;a se ubica en agua (\(c(y)=3\)).
+                </p>
+                <p style="margin-top:12px;">
+                    El <strong>campo de potencial de atracci&#243;n</strong>
+                    \(\Pi:\mathcal{G}\to[0,1]\) cuantifica la proximidad de cada celda a los sitios
+                    de cr&#237;a mediante un kernel de decaimiento exponencial con par&#225;metro \(\lambda\):
+                </p>
+                <div class="eq-block">
+                    <div class="eq-label">Campo de potencial de atracci&#243;n</div>
+                    \[
+                    \Pi(y) = \frac{1}{\Pi_{\max}}
+                    \sum_{b \in \mathcal{S}} \exp\!\left(-\frac{\|y-b\|_2}{\lambda}\right),
+                    \qquad \lambda = 10
+                    \]
+                </div>
+                <p>
+                    El campo se normaliza dividiendo por \(\Pi_{\max} = \max_{y\in\mathcal{G}}\Pi(y)\)
+                    para obtener valores en \([0,1]\). Cuando \(\Pi \equiv 0\),
+                    el movimiento es puramente exploratorio, gobernado por \(\beta_0\).
+                </p>
+            </div>
+
+            <!-- 2. AGENTS -->
+            <div class="abm-sub reveal reveal-d1">
+                <h3>2 &middot; Descripci&#243;n de los Agentes</h3>
+                <p>
+                    Cada agente \(a_i(t)=\bigl(s_i(t),\,x_i(t)\bigr)\) posee un
+                    <strong>estado discreto</strong> \(s_i \in \{J,M,F_U,F_G,D\}\) y una
+                    <strong>posici&#243;n</strong> \(x_i\in\mathcal{G}\).
+                    Los juveniles son <em>inm&#243;viles</em>; los adultos realizan un salto estoc&#225;stico en cada
+                    paso.
+                </p>
+                <div class="states-grid" style="margin-top:16px;">
+                    <div class="state-chip">
+                        <div class="state-symbol" style="background:#fef9c3;color:#854d0e;">J</div>
+                        <div class="state-info">
+                            <div class="state-label">Juvenil</div>
+                            <div class="state-desc">Inm&#243;vil. Existe solo en sitios de cr&#237;a. Transiciones:
+                                muerte o maduraci&#243;n a adulto.</div>
+                        </div>
+                    </div>
+                    <div class="state-chip">
+                        <div class="state-symbol" style="background:#dbeafe;color:#1d4ed8;">M</div>
+                        <div class="state-info">
+                            <div class="state-label">Macho adulto</div>
+                            <div class="state-desc">M&#243;vil. Muere a tasa \(\mu_M\). Disponible para apareamiento con
+                                \(F_U\).</div>
+                        </div>
+                    </div>
+                    <div class="state-chip">
+                        <div class="state-symbol" style="background:#fce7f3;color:#be185d;">F<sub
+                                style="font-size:9px;">U</sub></div>
+                        <div class="state-info">
+                            <div class="state-label">Hembra no apareada</div>
+                            <div class="state-desc">M&#243;vil. Muere a tasa \(\mu_F\). Transiciona a \(F_G\) al
+                                encontrar un macho.</div>
+                        </div>
+                    </div>
+                    <div class="state-chip">
+                        <div class="state-symbol" style="background:#d1fae5;color:#065f46;">F<sub
+                                style="font-size:9px;">G</sub></div>
+                        <div class="state-info">
+                            <div class="state-label">Hembra gr&#225;vida</div>
+                            <div class="state-desc">M&#243;vil. Muere a tasa \(\mu_F\). Oviposita a tasa \(f\) en sitios
+                                de cr&#237;a.</div>
+                        </div>
+                    </div>
+                    <div class="state-chip">
+                        <div class="state-symbol" style="background:#f3f4f6;color:#6b7280;">D</div>
+                        <div class="state-info">
+                            <div class="state-label">Muerto</div>
+                            <div class="state-desc">Estado absorbente terminal. No ejecuta ninguna transici&#243;n
+                                ulterior.</div>
+                        </div>
+                    </div>
+                </div>
+                <div style="overflow-x:auto;margin-top:18px;">
+                    <table class="params-table">
+                        <thead>
+                            <tr>
+                                <th>S&#237;mbolo</th>
+                                <th>Descripci&#243;n</th>
+                                <th>Valor por defecto</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="param-sym">&#956;<sub>J</sub></span></td>
+                                <td>Tasa de mortalidad juvenil basal</td>
+                                <td><span class="example-val">0.05 d&#8315;&#185;</span></td>
+                            </tr>
+                            <tr>
+                                <td><span class="param-sym">&#956;<sub>M</sub></span></td>
+                                <td>Tasa de mortalidad de machos adultos</td>
+                                <td><span class="example-val">0.10 d&#8315;&#185;</span></td>
+                            </tr>
+                            <tr>
+                                <td><span class="param-sym">&#956;<sub>F</sub></span></td>
+                                <td>Tasa de mortalidad de hembras</td>
+                                <td><span class="example-val">0.08 d&#8315;&#185;</span></td>
+                            </tr>
+                            <tr>
+                                <td><span class="param-sym">&#947;</span></td>
+                                <td>Tasa de maduraci&#243;n larval a adulto</td>
+                                <td><span class="example-val">0.07 d&#8315;&#185;</span></td>
+                            </tr>
+                            <tr>
+                                <td><span class="param-sym">&#945;</span></td>
+                                <td>Coeficiente de competencia larval densodependiente</td>
+                                <td><span class="example-val">0.001</span></td>
+                            </tr>
+                            <tr>
+                                <td><span class="param-sym">K<sub>c</sub></span></td>
+                                <td>Capacidad de carga del vecindario de densidad</td>
+                                <td><span class="example-val">100</span></td>
+                            </tr>
+                            <tr>
+                                <td><span class="param-sym">&#946;</span></td>
+                                <td>Tasa de apareamiento por macho en radio \(r_m\)</td>
+                                <td><span class="example-val">0.02 d&#8315;&#185;</span></td>
+                            </tr>
+                            <tr>
+                                <td><span class="param-sym">f</span></td>
+                                <td>Tasa de oviposici&#243;n de \(F_G\)</td>
+                                <td><span class="example-val">5.0 d&#8315;&#185;</span></td>
+                            </tr>
+                            <tr>
+                                <td><span class="param-sym">r<sub>m</sub></span></td>
+                                <td>Radio de b&#250;squeda de machos para apareamiento</td>
+                                <td><span class="example-val">5 celdas</span></td>
+                            </tr>
+                            <tr>
+                                <td><span class="param-sym">r<sub>d</sub></span></td>
+                                <td>Radio del vecindario de densidad juvenil</td>
+                                <td><span class="example-val">3 celdas</span></td>
+                            </tr>
+                            <tr>
+                                <td><span class="param-sym">r<sub>o</sub></span></td>
+                                <td>Radio m&#225;ximo de oviposici&#243;n al sitio de cr&#237;a</td>
+                                <td><span class="example-val">10 celdas</span></td>
+                            </tr>
+                            <tr>
+                                <td><span class="param-sym">R</span></td>
+                                <td>Radio m&#225;ximo de salto adulto en la ret&#237;cula</td>
+                                <td><span class="example-val">3 celdas</span></td>
+                            </tr>
+                            <tr>
+                                <td><span class="param-sym">&#946;<sub>0</sub></span></td>
+                                <td>Sesgo exploratorio del movimiento</td>
+                                <td><span class="example-val">10.0</span></td>
+                            </tr>
+                            <tr>
+                                <td><span class="param-sym">&#916;t</span></td>
+                                <td>Paso de tiempo de la simulaci&#243;n</td>
+                                <td><span class="example-val">1.0 d&#237;a</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 3. JUVENILE DYNAMICS -->
+            <div class="abm-sub reveal reveal-d2">
+                <h3>3 &middot; Din&#225;mica de Juveniles &mdash; temporal y espacial</h3>
+                <p>
+                    Los juveniles son <strong>inm&#243;viles</strong> y existen &#250;nicamente en los sitios
+                    de cr&#237;a \(\mathcal{S}\). Sea \(J_k(t)\) el n&#250;mero de juveniles asociado al sitio \(s_k\).
+                    Su evoluci&#243;n discreta en el tiempo sigue:
+                </p>
+                <div class="eq-block">
+                    <div class="eq-label">Evoluci&#243;n temporal de la poblaci&#243;n juvenil en \(s_k\)</div>
+                    \[
+                    J_k(t+\Delta t) = J_k(t) + X_{\text{nac},k} - X_{\text{mat},k} - X_{\text{muerte},k}
+                    \]
+                </div>
+                <p style="margin-top:14px;"><strong style="color:var(--primary-dark);">Nacimientos</strong></p>
+                <div class="eq-block">
+                    \[
+                    X_{\text{nac},k} \sim \mathrm{Bin}\!\left(F_G^{(k)},\; 1 - e^{-f\,\Delta t}\right)
+                    \]
+                </div>
+                <p style="margin-top:14px;"><strong style="color:var(--primary-dark);">Maduraci&#243;n</strong></p>
+                <div class="eq-block">
+                    \[
+                    X_{\text{mat},k} \sim \mathrm{Bin}\!\left(J_k(t),\; 1 - e^{-\gamma\,\Delta t}\right)
+                    \]
+                </div>
+                <p>Cada juvenil que madura transiciona a adulto con probabilidad \(\tfrac{1}{2}\) de ser \(F_U\) o
+                    \(M\).</p>
+                <p style="margin-top:14px;"><strong style="color:var(--primary-dark);">Mortalidad
+                        densodependiente</strong></p>
+                <div class="eq-block">
+                    \[
+                    X_{\text{muerte},k} \sim \mathrm{Bin}\!\left(J_k(t),\; 1 - e^{-(\mu_J + \alpha\,\rho_k)\,\Delta
+                    t}\right),
+                    \qquad
+                    \rho_k = \frac{J_k(t)}{K_c \cdot A_d},
+                    \quad A_d = (2r_d+1)^2
+                    \]
+                </div>
+            </div>
+
+            <!-- 4. ADULT DYNAMICS -->
+            <div class="abm-sub reveal reveal-d2">
+                <h3>4 &middot; Din&#225;mica de Adultos &mdash; temporal y espacial</h3>
+                <p>En cada paso \(\Delta t\), todo adulto vivo primero ejecuta su <strong>transici&#243;n
+                        demogr&#225;fica</strong> y, si permanece vivo, realiza su <strong>salto espacial</strong>.</p>
+                <p style="margin-top:14px;"><strong style="color:var(--primary-dark);">Macho adulto \(M\)</strong></p>
+                <div class="eq-block">
+                    <div class="eq-label">Probabilidad de muerte del macho</div>
+                    \[ P(M \to D) = 1 - e^{-\mu_M\,\Delta t} \]
+                </div>
+                <p style="margin-top:14px;"><strong style="color:var(--primary-dark);">Hembra no apareada
+                        \(F_U\)</strong></p>
+                <div class="eq-block">
+                    <div class="eq-label">Mortalidad y apareamiento de \(F_U\)</div>
+                    \[
+                    P(F_U \to D) = 1 - e^{-\mu_F\,\Delta t}
+                    \]
+                    \[
+                    M_{r_m}(x_i) = \#\{j : s_j=M,\; \|x_j - x_i\|_2 \le r_m\},
+                    \quad
+                    \lambda_m = \beta \cdot M_{r_m}(x_i),
+                    \quad
+                    P(F_U \to F_G) = 1 - e^{-\lambda_m\,\Delta t}
+                    \]
+                </div>
+                <p style="margin-top:14px;"><strong style="color:var(--primary-dark);">Hembra gr&#225;vida
+                        \(F_G\)</strong></p>
+                <div class="eq-block">
+                    <div class="eq-label">Mortalidad y oviposici&#243;n de \(F_G\)</div>
+                    \[
+                    P(F_G \to D) = 1 - e^{-\mu_F\,\Delta t},
+                    \qquad
+                    P(\text{oviposita}) = 1 - e^{-f\,\Delta t}
+                    \]
+                </div>
+                <p style="margin-top:18px;"><strong style="color:var(--primary-dark);">Movimiento estoc&#225;stico en la
+                        ret&#237;cula</strong></p>
+                <div class="eq-block">
+                    <div class="eq-label">Vecindario v&#225;lido de salto</div>
+                    \[
+                    N_R(x) = \bigl\{\,y\in\mathcal{G}\;\big|\;
+                    \|y-x\|_2 \le R,\;\;
+                    c(y)\notin \mathcal{C}_{\text{prhb}}\,\bigr\}
+                    \]
+                </div>
+                <div class="eq-block">
+                    <div class="eq-label">N&#250;cleo de transici&#243;n de Markov</div>
+                    \[
+                    P(y\mid x) =
+                    \frac{\tilde{w}(y\mid x)}{\displaystyle\sum_{z\in N_R(x)}\tilde{w}(z\mid x)},
+                    \qquad
+                    \tilde{w}(y\mid x) = \frac{\Pi(y)+\beta_0}{\|y-x\|_2+1}
+                    \]
+                </div>
+            </div>
+
+            <!-- 5. MATING & GENERATION -->
+            <div class="abm-sub reveal reveal-d3">
+                <h3>5 &middot; Din&#225;mica de Apareamiento y Generaci&#243;n de Juveniles</h3>
+                <p>El ciclo reproductivo conecta la din&#225;mica adulta y la juvenil a trav&#233;s de cuatro eventos
+                    que ocurren secuencialmente en cada paso \(\Delta t\):</p>
+                <p style="margin-top:16px;"><strong style="color:var(--primary-dark);">I. Encuentro</strong>&ensp;
+                    La hembra \(F_U\) cuenta los machos en su vecindario de radio \(r_m\).
+                    La tasa efectiva es \(\lambda_m = \beta \cdot M_{r_m}(x_i)\).
+                </p>
+                <p style="margin-top:10px;"><strong style="color:var(--primary-dark);">II. Transici&#243;n de
+                        estado</strong>&ensp;
+                    Con probabilidad \(P = 1 - e^{-\lambda_m\,\Delta t}\) la hembra transiciona \(F_U \to F_G\).
+                </p>
+                <p style="margin-top:10px;"><strong style="color:var(--primary-dark);">III.
+                        Oviposici&#243;n</strong>&ensp;
+                    La hembra gr&#225;vida oviposita con probabilidad \(P = 1 - e^{-f\,\Delta t}\).
+                </p>
+                <div class="eq-block">
+                    <div class="eq-label">Condici&#243;n y localizaci&#243;n de nacimiento</div>
+                    \[
+                    s^* = \operatorname*{arg\,min}_{s\in\mathcal{S}} \|x_{F_G}-s\|_2
+                    \quad\text{s.t.}\quad \|x_{F_G}-s^*\|_2 \le r_o
+                    \]
+                </div>
+                <p style="margin-top:10px;"><strong style="color:var(--primary-dark);">IV. Incorporaci&#243;n del nuevo
+                        juvenil</strong>&ensp;
+                    Si la condici&#243;n es satisfecha, un nuevo agente en estado \(J\) se coloca en \(s^*\).
+                    Al madurar, se le asigna estado \(M\) o \(F_U\) con probabilidad \(\tfrac{1}{2}\) cada uno.
+                </p>
+            </div>
+
+            <!-- CONCLUSION -->
+            <div class="abm-conclusion reveal reveal-d4">
+                <strong>S&#237;ntesis del modelo:</strong> el ABM combina
+                <strong>heterogeneidad espacial urbana</strong>
+                derivada de datos geogr&#225;ficos reales (tipos de terreno, sitios de cr&#237;a georreferenciados),
+                <strong>interacciones estoc&#225;sticas locales</strong>
+                (mortalidad densodependiente, apareamiento por radio, oviposici&#243;n condicionada a proximidad)
+                y <strong>movimiento probabil&#237;stico tipo Markov</strong> guiado por un campo de potencial
+                generado por los sitios de cr&#237;a. Permite analizar c&#243;mo la distribuci&#243;n urbana de
+                sitios de cr&#237;a y las restricciones de terreno influyen sobre la dispersi&#243;n de
+                <em>Aedes aegypti</em>, y puede generar datos <em>in&#8209;silico</em>
+                sint&#233;ticos para calibraci&#243;n de par&#225;metros y modelos de aprendizaje autom&#225;tico.
+            </div>
+
+        </div><!-- /abm-section -->
+
+        <!-- ===== RESULTADOS ===== -->
+        <div class="resultados-section reveal" id="resultadosSection">
+
+            <div class="resultados-header">
+                <div class="resultados-badge">Resultados</div>
+                <h2 class="resultados-title">Resultados de la <span>Simulaci&#243;n ABM</span></h2>
+                <p class="resultados-sub">
+                    Visualizaci&#243;n de la din&#225;mica poblacional y la distribuci&#243;n
+                    espacial final de agentes, generadas a partir de la corrida de simulaci&#243;n almacenada.
+                </p>
+            </div>
+
+            <!-- Stat cards -->
+            <div class="res-stats">
+                <div class="res-stat-card">
+                    <div class="res-stat-icon" style="background:#fef3c7;"></div>
+                    <div class="res-stat-label">Duraci&#243;n sim.</div>
+                    <div class="res-stat-value" id="statDays">&#8212;</div>
+                    <div class="res-stat-sub">d&#237;as simulados</div>
+                </div>
+                <div class="res-stat-card">
+                    <div class="res-stat-icon" style="background:#dbeafe;"></div>
+                    <div class="res-stat-label">Poblaci&#243;n inicial</div>
+                    <div class="res-stat-value" id="statInitial">&#8212;</div>
+                    <div class="res-stat-sub">agentes en t=0</div>
+                </div>
+                <div class="res-stat-card">
+                    <div class="res-stat-icon" style="background:#fce7f3;"></div>
+                    <div class="res-stat-label">Pico poblacional</div>
+                    <div class="res-stat-value" id="statPeak">&#8212;</div>
+                    <div class="res-stat-sub">m&#225;ximo hist&#243;rico</div>
+                </div>
+                <div class="res-stat-card">
+                    <div class="res-stat-icon" style="background:#d1fae5;"></div>
+                    <div class="res-stat-label">Poblaci&#243;n final</div>
+                    <div class="res-stat-value" id="statFinal">&#8212;</div>
+                    <div class="res-stat-sub">agentes al final</div>
+                </div>
+                <div class="res-stat-card">
+                    <div class="res-stat-icon" style="background:#f3f4f6;"></div>
+                    <div class="res-stat-label">Total agentes</div>
+                    <div class="res-stat-value" id="statAgents">&#8212;</div>
+                    <div class="res-stat-sub">en estado final</div>
+                </div>
+            </div>
+
+            <!-- Chart pair -->
+            <div class="res-chart-pair">
+                <!-- Population timeseries -->
+                <div class="res-panel reveal reveal-d1">
+                    <div class="res-panel-header">
+                        <div class="res-panel-icon"></div>
+                        <h3>Din&#225;mica Poblacional</h3>
+                        <span>Series temporales</span>
+                    </div>
+                    <div id="popLoading" class="res-panel-loading">
+                        <div class="res-spinner"></div>
+                        <span>Generando gr&#225;fico&#8230;</span>
+                    </div>
+                    <img id="popImg" src="" alt="Gr&#225;fico de din&#225;mica poblacional" style="display:none;">
+                    <div id="popError" class="res-error-note" style="display:none;"></div>
+                </div>
+                <!-- Agent distribution map -->
+                <div class="res-panel reveal reveal-d2">
+                    <div class="res-panel-header">
+                        <div class="res-panel-icon"></div>
+                        <h3>Distribuci&#243;n Final</h3>
+                        <span>Mapa espacial</span>
+                    </div>
+                    <div id="distLoading" class="res-panel-loading">
+                        <div class="res-spinner"></div>
+                        <span>Generando mapa&#8230;</span>
+                    </div>
+                    <img id="distImg" src="" alt="Mapa de distribuci&#243;n final" style="display:none;">
+                    <div id="distError" class="res-error-note" style="display:none;"></div>
+                </div>
+            </div>
+
+            <!-- State breakdown -->
+            <div class="state-breakdown reveal reveal-d3" id="stateBreakdown" style="display:none;">
+                <h4>Composici&#243;n del Estado Final</h4>
+                <div class="state-bars" id="stateBars"></div>
+            </div>
+
+        </div><!-- /resultados-section -->
+
+    </div><!-- /page-content -->
+
+    <footer>
+        &copy; 2026 Aplicación de Deep Learning y Modelado Basado en Agentes para el Desarrollo de una Trampa
+        Inteligente de Mosquitos &mdash; Trabajo Final de Grado &middot; Facultad de Ingenier&#237;a, UNA
+    </footer>
+
+    <script>
+        /* ---- Hamburger ---- */
+        document.getElementById('hamburger').addEventListener('click', function () {
+            this.classList.toggle('open');
+            document.getElementById('nav-links').classList.toggle('open');
+        });
+        document.querySelectorAll('#nav-links a').forEach(a => a.addEventListener('click', () => {
+            document.getElementById('hamburger').classList.remove('open');
+            document.getElementById('nav-links').classList.remove('open');
+        }));
+
+        /* ---- Scroll reveal ---- */
+        const obs = new IntersectionObserver(entries => entries.forEach(e => {
+            if (e.isIntersecting) e.target.classList.add('visible');
+        }), { threshold: 0.1 });
+        document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+        /* ---- Hide preview when live results appear ---- */
+        function hidePreview() {
+            const preview = document.getElementById('previewSection');
+            if (preview) preview.style.display = 'none';
+        }
+
+        /* ---- Grid Generator ---- */
+        const STEPS = ['step-osm', 'step-sat', 'step-grid', 'step-render'];
+
+        function setStep(idx, pct, label) {
+            document.getElementById('progressLabel').textContent = label;
+            document.getElementById('progressBar').style.width = pct + '%';
+            STEPS.forEach((id, i) => {
+                const el = document.getElementById(id);
+                el.className = 'progress-step';
+                if (i < idx) el.classList.add('done');
+                else if (i === idx) el.classList.add('active');
+            });
+        }
+
+        async function generateGrid() {
+            const lat = parseFloat(document.getElementById('lat').value);
+            const lon = parseFloat(document.getElementById('lon').value);
+            const mapSize = parseInt(document.getElementById('mapsize').value);
+            const cellSize = parseInt(document.getElementById('cellsize').value);
+
+            if (isNaN(lat) || isNaN(lon) || isNaN(mapSize) || isNaN(cellSize)) {
+                showError('Por favor complet\u00e1 todos los campos correctamente.');
+                return;
+            }
+            if (mapSize < 100 || mapSize > 3000) {
+                showError('El tama\u00f1o del mapa debe estar entre 100 y 3000 m.');
+                return;
+            }
+            if (cellSize < 1 || cellSize > 50) {
+                showError('El tama\u00f1o de celda debe estar entre 1 y 50 m.');
+                return;
+            }
+
+            const gridSize = Math.floor(mapSize / cellSize);
+            if (gridSize > 1000) {
+                showError(`La grilla resultante tendr\u00eda ${gridSize}\u00d7${gridSize} celdas. Redu\u00ed el tama\u00f1o del \u00e1rea o aument\u00e1 el tama\u00f1o de celda para evitar tiempos muy largos.`);
+                return;
+            }
+
+            document.getElementById('errorBox').classList.remove('visible');
+            document.getElementById('resultsSection').classList.remove('visible');
+            document.getElementById('progressArea').classList.add('visible');
+            document.getElementById('generateBtn').disabled = true;
+            document.getElementById('generateBtn').textContent = 'Generando...';
+
+            setStep(0, 5, 'Conectando con OpenStreetMap...');
+            let simInterval = simulateProgress();
+
+            try {
+                const resp = await fetch((window.BACKEND_URL||'') + '/api/generate-grid', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lat, lon, map_size_m: mapSize, cell_size_m: cellSize })
+                });
+
+                clearInterval(simInterval);
+
+                if (!resp.ok) {
+                    const err = await resp.json().catch(() => ({ detail: 'Error desconocido.' }));
+                    throw new Error(err.detail || 'Error en el servidor.');
+                }
+
+                const data = await resp.json();
+                setStep(4, 100, 'Listo');
+                STEPS.forEach(id => {
+                    document.getElementById(id).className = 'progress-step done';
+                });
+
+                hidePreview();
+                showResults(data, { lat, lon, mapSize, cellSize, gridSize });
+
+            } catch (err) {
+                clearInterval(simInterval);
+                showError(err.message);
+            } finally {
+                document.getElementById('progressArea').classList.remove('visible');
+                document.getElementById('generateBtn').disabled = false;
+                document.getElementById('generateBtn').textContent = 'Generar Grilla';
+            }
+        }
+
+        function simulateProgress() {
+            const sequence = [
+                { idx: 0, pct: 10, label: 'Descargando edificios desde OSM...', delay: 1500 },
+                { idx: 0, pct: 20, label: 'Descargando agua y vegetaci\u00f3n...', delay: 3000 },
+                { idx: 0, pct: 30, label: 'Descargando red vial...', delay: 4500 },
+                { idx: 1, pct: 42, label: 'Obteniendo imagen satelital (Esri)...', delay: 6500 },
+                { idx: 2, pct: 55, label: 'Rasterizando edificios...', delay: 9000 },
+                { idx: 2, pct: 65, label: 'Rasterizando vegetaci\u00f3n y agua...', delay: 13000 },
+                { idx: 2, pct: 75, label: 'Rasterizando calles...', delay: 18000 },
+                { idx: 3, pct: 88, label: 'Renderizando visualizaci\u00f3n...', delay: 22000 },
+                { idx: 3, pct: 94, label: 'Finalizando...', delay: 26000 },
+            ];
+            const timers = [];
+            sequence.forEach(s => {
+                const t = setTimeout(() => setStep(s.idx, s.pct, s.label), s.delay);
+                timers.push(t);
+            });
+            return { clear: () => timers.forEach(clearTimeout) };
+        }
+
+        const _clearInterval = clearInterval;
+        clearInterval = function (x) {
+            if (x && typeof x.clear === 'function') x.clear();
+            else _clearInterval(x);
+        };
+
+        function showError(msg) {
+            const box = document.getElementById('errorBox');
+            box.textContent = msg;
+            box.classList.add('visible');
+        }
+
+        function showResults(data, params) {
+            const cfg = document.getElementById('configSummary');
+            cfg.innerHTML = `
+                <div class="config-item">
+                    <div class="config-label">Centro</div>
+                    <div class="config-val">${params.lat.toFixed(4)}, ${params.lon.toFixed(4)}</div>
+                </div>
+                <div class="config-item">
+                    <div class="config-label">\u00c1rea</div>
+                    <div class="config-val">${params.mapSize} \u00d7 ${params.mapSize} m</div>
+                </div>
+                <div class="config-item">
+                    <div class="config-label">Celda</div>
+                    <div class="config-val">${params.cellSize} m</div>
+                </div>
+                <div class="config-item">
+                    <div class="config-label">Grilla</div>
+                    <div class="config-val">${params.gridSize} \u00d7 ${params.gridSize}</div>
+                </div>
+                <div class="config-item">
+                    <div class="config-label">Total celdas</div>
+                    <div class="config-val">${(params.gridSize * params.gridSize).toLocaleString()}</div>
+                </div>
+            `;
+
+            document.getElementById('gridLabel').textContent = `${params.gridSize}\u00d7${params.gridSize} celdas`;
+            document.getElementById('satImg').src = 'data:image/png;base64,' + data.satellite_b64;
+            document.getElementById('gridImg').src = 'data:image/png;base64,' + data.grid_b64;
+
+            const rs = document.getElementById('resultsSection');
+            rs.classList.add('visible');
+            rs.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        /* ---- Simulation Results ---- */
+        async function loadSimulationResults() {
+            let data;
+            try {
+                const resp = await fetch((window.BACKEND_URL||'') + '/api/simulation-results');
+                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                data = await resp.json();
+            } catch (err) {
+                ['popLoading', 'distLoading'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.innerHTML = '<span style="color:#b91c1c;">Error al cargar los resultados.</span>';
+                });
+                return;
+            }
+
+            /* Stat cards */
+            const fmt = n => (n !== undefined && n !== null)
+                ? Number(n).toLocaleString('es-PY') : '\u2014';
+            document.getElementById('statDays').textContent = data.total_days ?? '\u2014';
+            document.getElementById('statInitial').textContent = fmt(data.initial_total);
+            document.getElementById('statPeak').textContent = fmt(data.peak_total);
+            document.getElementById('statFinal').textContent = fmt(data.final_total);
+            document.getElementById('statAgents').textContent = fmt(data.n_agents);
+
+            /* Population chart */
+            const popLoad = document.getElementById('popLoading');
+            const popImg = document.getElementById('popImg');
+            const popErr = document.getElementById('popError');
+            if (data.population_b64) {
+                popImg.src = 'data:image/png;base64,' + data.population_b64;
+                popImg.style.display = 'block';
+                popLoad.style.display = 'none';
+            } else {
+                popLoad.style.display = 'none';
+                popErr.textContent = 'No se pudo generar el gr\u00e1fico: ' +
+                    (data.population_error || 'error desconocido');
+                popErr.style.display = 'block';
+            }
+
+            /* Distribution map */
+            const distLoad = document.getElementById('distLoading');
+            const distImg = document.getElementById('distImg');
+            const distErr = document.getElementById('distError');
+            if (data.distribution_b64) {
+                distImg.src = 'data:image/png;base64,' + data.distribution_b64;
+                distImg.style.display = 'block';
+                distLoad.style.display = 'none';
+            } else {
+                distLoad.style.display = 'none';
+                distErr.textContent = 'No se pudo generar el mapa: ' +
+                    (data.distribution_error || 'error desconocido');
+                distErr.style.display = 'block';
+            }
+
+            /* State breakdown bars */
+            if (data.state_counts) {
+                const stateLabels = {
+                    'JUVENILE': { label: 'Juvenil (J)', color: '#f59e0b' },
+                    'ADULT_MALE': { label: 'Macho (M)', color: '#3b82f6' },
+                    'ADULT_FEMALE_U': { label: 'Hembra FU', color: '#ec4899' },
+                    'ADULT_FEMALE_G': { label: 'Hembra FG', color: '#10b981' },
+                };
+                const total = Object.values(data.state_counts).reduce((a, b) => a + b, 0);
+                const container = document.getElementById('stateBars');
+                container.innerHTML = '';
+                Object.entries(stateLabels).forEach(([key, meta]) => {
+                    const count = data.state_counts[key] || 0;
+                    const pct = total > 0 ? (count / total * 100).toFixed(1) : 0;
+                    const row = document.createElement('div');
+                    row.className = 'state-bar-row';
+                    row.innerHTML = `
+                        <div class="state-bar-label">${meta.label}</div>
+                        <div class="state-bar-outer">
+                            <div class="state-bar-inner" style="width:0%;background:${meta.color};"
+                                 data-target="${pct}"></div>
+                        </div>
+                        <div class="state-bar-count">${count.toLocaleString('es-PY')}</div>
+                    `;
+                    container.appendChild(row);
+                });
+                document.getElementById('stateBreakdown').style.display = 'block';
+                requestAnimationFrame(() => requestAnimationFrame(() => {
+                    container.querySelectorAll('.state-bar-inner').forEach(bar => {
+                        bar.style.width = bar.dataset.target + '%';
+                    });
+                }));
+            }
+        }
+
+        /* Trigger on page load */
+        document.addEventListener('DOMContentLoaded', loadSimulationResults);
+    </script>
+
+</body>
+
+</html>

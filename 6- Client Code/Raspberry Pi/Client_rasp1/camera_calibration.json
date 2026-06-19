@@ -1,0 +1,13 @@
+{
+    "LensPosition": 10.0,
+    "Zoom": 2.5,
+    "ExposureTime": 8000,
+    "AnalogueGain": 1.6,
+    "ColourGains": [
+        2.1,
+        1.1
+    ],
+    "Sharpness": 1.5,
+    "Contrast": 1.3,
+    "Saturation": 0.9
+}

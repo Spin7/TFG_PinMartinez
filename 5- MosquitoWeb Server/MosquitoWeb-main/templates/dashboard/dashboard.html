@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard — MosquitoAI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/htmx.org"></script>
+
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #1d4ed8;
+            --primary-light: #eff6ff;
+            --dark: #1f2937;
+            --text: #475569;
+            --text-sub: #64748b;
+            --bg: #eef2f5;
+            --card-bg: #ffffff;
+            --border: #e2e8f0;
+            --border-blue: rgba(59, 130, 246, 0.25);
+            --success: #10b981;
+            --warning: #f59e0b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            width: 60vw;
+            height: 60vw;
+            max-width: 700px;
+            max-height: 700px;
+            transform: translate(-50%, -50%);
+            background: url("/static/logo.jpg") no-repeat center;
+            background-size: contain;
+            opacity: 0.04;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: rgba(255, 255, 255, .92);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 58px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, .06);
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 16px;
+            color: var(--dark);
+            text-decoration: none;
+        }
+
+        .nav-logo img {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            object-fit: cover;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: var(--text);
+            text-decoration: none;
+            padding: 7px 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all .2s;
+        }
+
+        .nav-links a:hover {
+            background: #f1f5f9;
+            color: var(--dark);
+        }
+
+        .nav-links a.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            cursor: pointer;
+            padding: 6px;
+            border: none;
+            background: transparent;
+        }
+
+        .hamburger span {
+            display: block;
+            width: 22px;
+            height: 2px;
+            background: var(--dark);
+            border-radius: 2px;
+            transition: all .3s;
+        }
+
+        .hamburger.open span:nth-child(1) {
+            transform: translateY(7px) rotate(45deg);
+        }
+
+        .hamburger.open span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .hamburger.open span:nth-child(3) {
+            transform: translateY(-7px) rotate(-45deg);
+        }
+
+        @media (max-width:760px) {
+            .hamburger {
+                display: flex;
+            }
+
+            .nav-links {
+                display: none;
+                flex-direction: column;
+                gap: 2px;
+                position: fixed;
+                top: 58px;
+                left: 0;
+                right: 0;
+                background: white;
+                border-bottom: 1px solid var(--border);
+                padding: 10px 16px 16px;
+                box-shadow: 0 4px 16px rgba(0, 0, 0, .08);
+                z-index: 99;
+            }
+
+            .nav-links.open {
+                display: flex;
+            }
+
+            .nav-links a {
+                padding: 10px 14px;
+                border-radius: 8px;
+                width: 100%;
+            }
+        }
+
+        /* ===== PAGE HEADER (standard across all pages) ===== */
+        .page-header {
+            position: relative;
+            z-index: 1;
+            padding: 110px 24px 56px;
+            text-align: center;
+            background: linear-gradient(180deg, white 0%, var(--bg) 100%);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .page-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            color: var(--primary);
+            padding: 6px 16px;
+            border-radius: 50px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .page-badge::before {
+            content: '';
+            width: 7px;
+            height: 7px;
+            background: var(--primary);
+            border-radius: 50%;
+            animation: pulse 1.8s infinite;
+        }
+
+        .page-header h1 {
+            font-size: clamp(28px, 5vw, 52px);
+            font-weight: 800;
+            color: var(--dark);
+            line-height: 1.15;
+            margin-bottom: 14px;
+        }
+
+        .page-header h1 span {
+            color: var(--primary);
+        }
+
+        .page-header .lead {
+            color: var(--text-sub);
+            max-width: 580px;
+            margin: 0 auto 14px;
+            font-size: clamp(14px, 2vw, 16.5px);
+            line-height: 1.75;
+        }
+
+        /* ===== ANIMATIONS ===== */
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: .5;
+                transform: scale(.8);
+            }
+        }
+
+        .page {
+            position: relative;
+            z-index: 1;
+            max-width: 1160px;
+            margin: 0 auto;
+            padding: 40px 24px 60px;
+        }
+
+        .live-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            color: #16a34a;
+            padding: 4px 12px;
+            border-radius: 50px;
+            font-size: 12px;
+            font-weight: 700;
+            margin-top: 8px;
+        }
+
+        .live-badge::before {
+            content: '';
+            width: 7px;
+            height: 7px;
+            background: #22c55e;
+            border-radius: 50%;
+            animation: livePulse 1.5s infinite;
+        }
+
+        @keyframes livePulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                box-shadow: 0 0 0 0 rgba(34, 197, 94, .4);
+            }
+
+            50% {
+                opacity: .7;
+                box-shadow: 0 0 0 4px rgba(34, 197, 94, 0);
+            }
+        }
+
+        /* STAT CARDS */
+        .stat-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 20px 22px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, .04);
+            transition: transform .3s, border-color .3s, box-shadow .3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--border-blue);
+            box-shadow: 0 6px 18px rgba(59, 130, 246, .1);
+        }
+
+        .stat-card-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-sub);
+            margin-bottom: 8px;
+        }
+
+        .stat-card-value {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .stat-card-sub {
+            font-size: 12px;
+            color: var(--text-sub);
+            margin-top: 3px;
+        }
+
+        /* TABLE CARD */
+        .table-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 22px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .05);
+        }
+
+        .table-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .table-card-header h2 {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .update-hint {
+            font-size: 12px;
+            color: var(--text-sub);
+        }
+
+        /* LOADING */
+        .loading {
+            text-align: center;
+            padding: 36px;
+            color: var(--text-sub);
+        }
+
+        .loading-spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid #e2e8f0;
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin .7s linear infinite;
+            margin: 0 auto 12px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* TABLE */
+        .table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 700px;
+        }
+
+        thead {
+            background: #f8fafc;
+        }
+
+        thead th {
+            padding: 11px 14px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-sub);
+            text-align: left;
+            border-bottom: 2px solid var(--border);
+        }
+
+        tbody tr {
+            border-bottom: 1px solid var(--border);
+            transition: background .15s;
+        }
+
+        tbody tr:hover {
+            background: #f8fafc;
+        }
+
+        tbody td {
+            padding: 11px 14px;
+            color: var(--dark);
+            font-size: 14px;
+        }
+
+        tbody tr:nth-child(even) {
+            background: #fafafa;
+        }
+
+        .table-img {
+            width: 140px;
+            max-width: 100%;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            margin: 2px;
+        }
+
+        .conf-high {
+            background: #eff6ff;
+            color: var(--primary);
+            border: 1px solid #bfdbfe;
+        }
+
+        .conf-mid {
+            background: #ecfdf5;
+            color: #059669;
+            border: 1px solid #a7f3d0;
+        }
+
+        .conf-low {
+            background: #f1f5f9;
+            color: var(--text-sub);
+            border: 1px solid var(--border);
+        }
+
+        @media(max-width:600px) {
+            .table-img {
+                width: 100px;
+            }
+
+            tbody td {
+                font-size: 12px;
+                padding: 9px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <a href="/home" class="nav-logo"><img src="/static/logo.jpg" alt="Logo">MosquitoAI</a>
+        <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+        <div class="nav-links" id="nav-links">
+            <a href="/home">Home</a>
+            <a href="/about">Proyecto</a>
+            <a href="/model">Modelo IA</a>
+            <a href="/simulation">Simulación</a>
+            <a href="/dashboard" class="active">Dashboard</a>
+        </div>
+    </nav>
+
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+        <h1><span>Dashboard</span> de Detecciones</h1>
+        <p class="lead">Monitoreo en tiempo real de mosquitos detectados por el sistema edge.</p>
+        <div class="live-badge">LIVE — Actualización cada 5 segundos</div>
+    </div>
+
+    <div class="page">
+
+        <div class="stat-row">
+            <div class="stat-card">
+                <div class="stat-card-label">Total Registros</div>
+                <div class="stat-card-value" id="stat-total">—</div>
+                <div class="stat-card-sub">últimas 50 entradas</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-label">Temp. Promedio</div>
+                <div class="stat-card-value" id="stat-temp">—</div>
+                <div class="stat-card-sub">°C en los registros</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-label">Humedad Promedio</div>
+                <div class="stat-card-value" id="stat-hum">—</div>
+                <div class="stat-card-sub">% en los registros</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-label">Detecciones Totales</div>
+                <div class="stat-card-value" id="stat-det">—</div>
+                <div class="stat-card-sub">badges detectados</div>
+            </div>
+        </div>
+
+        <div class="table-card">
+            <div class="table-card-header">
+                <h2>Últimas Detecciones</h2>
+                <div class="update-hint">Auto-actualización activa</div>
+            </div>
+            <div id="table-container" hx-get="/dashboard/table" hx-trigger="load, every 5s" hx-target="#table-container"
+                hx-swap="innerHTML">
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <p>Cargando datos…</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer
+        style="position:relative;z-index:1;border-top:1px solid var(--border);text-align:center;padding:28px 20px;color:var(--text-sub);font-size:13px;background:white;">
+        &copy; 2026 Aplicación de Deep Learning y Modelado Basado en Agentes para el Desarrollo de una Trampa
+        Inteligente de Mosquitos &mdash; Trabajo Final de Grado &middot; Facultad de Ingenier&#237;a, UNA
+    </footer>
+
+    <script>
+        document.body.addEventListener('htmx:afterSwap', updateStats);
+        function updateStats() {
+            const rows = document.querySelectorAll('tbody tr');
+            if (!rows.length) return;
+            let totalDet = 0; let temps = [], hums = [];
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                if (cells.length >= 4) {
+                    const t = parseFloat(cells[2]?.textContent);
+                    const h = parseFloat(cells[3]?.textContent);
+                    if (!isNaN(t)) temps.push(t);
+                    if (!isNaN(h)) hums.push(h);
+                }
+                totalDet += row.querySelectorAll('.badge').length;
+            });
+            animateCount('stat-total', rows.length);
+            if (temps.length) animateFloat('stat-temp', temps.reduce((a, b) => a + b, 0) / temps.length, '°');
+            if (hums.length) animateFloat('stat-hum', hums.reduce((a, b) => a + b, 0) / hums.length, '%');
+            animateCount('stat-det', totalDet);
+        }
+        function animateCount(id, target) {
+            const el = document.getElementById(id); if (!el) return;
+            let start = null; const from = parseInt(el.textContent) || 0;
+            const step = ts => { if (!start) start = ts; const p = Math.min((ts - start) / 500, 1); el.textContent = Math.round(from + (target - from) * p); if (p < 1) requestAnimationFrame(step); };
+            requestAnimationFrame(step);
+        }
+        function animateFloat(id, target, suffix) {
+            const el = document.getElementById(id); if (!el) return;
+            let start = null;
+            const step = ts => { if (!start) start = ts; const p = Math.min((ts - start) / 500, 1); el.textContent = (target * p).toFixed(1) + suffix; if (p < 1) requestAnimationFrame(step); };
+            requestAnimationFrame(step);
+        }
+
+        document.getElementById('hamburger').addEventListener('click', function () {
+            this.classList.toggle('open');
+            document.getElementById('nav-links').classList.toggle('open');
+        });
+        document.querySelectorAll('#nav-links a').forEach(a => a.addEventListener('click', () => {
+            document.getElementById('hamburger').classList.remove('open');
+            document.getElementById('nav-links').classList.remove('open');
+        }));
+    </script>
+</body>
+
+</html>

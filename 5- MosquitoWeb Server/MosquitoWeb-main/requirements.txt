@@ -1,0 +1,31 @@
+# ─── Core ──────────────────────────────────────────────────────────────────────
+fastapi>=0.111.0
+uvicorn[standard]>=0.30.0
+python-multipart>=0.0.9
+python-dotenv>=1.0.0
+
+# ─── Database ──────────────────────────────────────────────────────────────────
+sqlalchemy>=2.0.0
+psycopg2-binary>=2.9.0
+
+# ─── Supabase Storage ──────────────────────────────────────────────────────────
+supabase>=2.0.0
+requests>=2.31.0
+
+# ─── ML Inference ──────────────────────────────────────────────────────────────
+numpy>=1.26.0
+opencv-python-headless>=4.9.0.80
+onnxruntime>=1.18.0
+
+# ─── Data & Visualisation ──────────────────────────────────────────────────────
+matplotlib>=3.9.0
+pandas>=2.2.0
+
+# ─── GIS (used only by /api/generate-grid) ─────────────────────────────────────
+osmnx>=1.9.0
+geopandas>=0.14.0
+contextily>=1.6.0
+shapely>=2.0.0
+
+# ─── Optional tunnel (local dev only) ──────────────────────────────────────────
+pyngrok>=7.0.0

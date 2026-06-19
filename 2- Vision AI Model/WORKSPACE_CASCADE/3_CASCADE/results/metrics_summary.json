@@ -1,0 +1,79 @@
+{
+  "split": "test",
+  "total_images": 235,
+  "detection": {
+    "iou_threshold": 0.5,
+    "per_class": {
+      "Female": {
+        "TP": 152,
+        "FP": 151,
+        "FN": 85,
+        "precision": 0.5017,
+        "recall": 0.6414,
+        "f1": 0.563
+      },
+      "Male": {
+        "TP": 194,
+        "FP": 0,
+        "FN": 36,
+        "precision": 1.0,
+        "recall": 0.8435,
+        "f1": 0.9151
+      }
+    },
+    "macro": {
+      "precision": 0.7508,
+      "recall": 0.7424,
+      "f1": 0.739
+    }
+  },
+  "classification": {
+    "total_instances": 346,
+    "accuracy": 0.9595,
+    "confusion_matrix": [
+      [
+        149,
+        3
+      ],
+      [
+        11,
+        183
+      ]
+    ],
+    "per_class": {
+      "Female": {
+        "TP": 149,
+        "FP": 11,
+        "FN": 3,
+        "precision": 0.9313,
+        "recall": 0.9803,
+        "f1": 0.9551,
+        "support": 152
+      },
+      "Male": {
+        "TP": 183,
+        "FP": 3,
+        "FN": 11,
+        "precision": 0.9839,
+        "recall": 0.9433,
+        "f1": 0.9632,
+        "support": 194
+      }
+    },
+    "macro": {
+      "precision": 0.9576,
+      "recall": 0.9618,
+      "f1": 0.9591
+    },
+    "weighted": {
+      "precision": 0.9608,
+      "recall": 0.9595,
+      "f1": 0.9596
+    }
+  },
+  "end_to_end": {
+    "accuracy": 0.7109,
+    "avg_inference_ms": 64.11,
+    "fps": 15.6
+  }
+}

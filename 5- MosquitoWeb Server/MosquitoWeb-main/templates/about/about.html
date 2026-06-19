@@ -1,0 +1,1176 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proyecto — MosquitoAI</title>
+    <meta name="description"
+        content="El proyecto MosquitoAI: contexto epidemiológico, proyecto Wolbachia, contribución tecnológica, instituciones y antecedentes académicos.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #1d4ed8;
+            --primary-light: #eff6ff;
+            --accent: #0284c7;
+            --dark: #1f2937;
+            --text: #475569;
+            --text-sub: #64748b;
+            --bg: #eef2f5;
+            --card-bg: #ffffff;
+            --border: #e2e8f0;
+            --border-blue: rgba(59, 130, 246, 0.25);
+            --success: #10b981;
+            --warning: #f59e0b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            width: 60vw;
+            height: 60vw;
+            max-width: 700px;
+            max-height: 700px;
+            transform: translate(-50%, -50%);
+            background: url("/static/logo.jpg") no-repeat center;
+            background-size: contain;
+            opacity: 0.04;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ===== NAVBAR ===== */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 58px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 16px;
+            color: var(--dark);
+            text-decoration: none;
+        }
+
+        .nav-logo img {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            object-fit: cover;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: var(--text);
+            text-decoration: none;
+            padding: 7px 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .nav-links a:hover {
+            background: #f1f5f9;
+            color: var(--dark);
+        }
+
+        .nav-links a.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            cursor: pointer;
+            padding: 6px;
+            border: none;
+            background: transparent;
+        }
+
+        .hamburger span {
+            display: block;
+            width: 22px;
+            height: 2px;
+            background: var(--dark);
+            border-radius: 2px;
+            transition: all .3s;
+        }
+
+        .hamburger.open span:nth-child(1) {
+            transform: translateY(7px) rotate(45deg);
+        }
+
+        .hamburger.open span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .hamburger.open span:nth-child(3) {
+            transform: translateY(-7px) rotate(-45deg);
+        }
+
+        @media (max-width: 760px) {
+            .hamburger {
+                display: flex;
+            }
+
+            .nav-links {
+                display: none;
+                flex-direction: column;
+                gap: 2px;
+                position: fixed;
+                top: 58px;
+                left: 0;
+                right: 0;
+                background: white;
+                border-bottom: 1px solid var(--border);
+                padding: 10px 16px 16px;
+                box-shadow: 0 4px 16px rgba(0, 0, 0, .08);
+                z-index: 99;
+            }
+
+            .nav-links.open {
+                display: flex;
+            }
+
+            .nav-links a {
+                padding: 10px 14px;
+                border-radius: 8px;
+                width: 100%;
+            }
+        }
+
+        /* ===== PAGE HEADER ===== */
+        .page-header {
+            position: relative;
+            z-index: 1;
+            padding: 110px 24px 56px;
+            text-align: center;
+            background: linear-gradient(180deg, white 0%, var(--bg) 100%);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .page-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            color: var(--primary);
+            padding: 6px 16px;
+            border-radius: 50px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .page-badge::before {
+            content: '';
+            width: 7px;
+            height: 7px;
+            background: var(--primary);
+            border-radius: 50%;
+            animation: pulse 1.8s infinite;
+        }
+
+        .page-header h1 {
+            font-size: clamp(28px, 5vw, 50px);
+            font-weight: 800;
+            color: var(--dark);
+            line-height: 1.15;
+            margin-bottom: 14px;
+        }
+
+        .page-header h1 span {
+            color: var(--primary);
+        }
+
+        .page-header .lead {
+            color: var(--text-sub);
+            max-width: 640px;
+            margin: 0 auto;
+            font-size: clamp(14px, 2vw, 16.5px);
+            line-height: 1.75;
+        }
+
+        /* ===== LAYOUT ===== */
+        main {
+            position: relative;
+            z-index: 1;
+            max-width: 1080px;
+            margin: 0 auto;
+            padding: 52px 24px 90px;
+        }
+
+        /* ===== SECTION WRAPPER ===== */
+        .section {
+            margin-bottom: 52px;
+        }
+
+        .section-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        .section-label::before {
+            content: "";
+            display: block;
+            width: 18px;
+            height: 2px;
+            background: var(--primary);
+            border-radius: 2px;
+        }
+
+        .section-title {
+            font-size: clamp(20px, 3vw, 28px);
+            font-weight: 800;
+            color: var(--dark);
+            margin-bottom: 24px;
+        }
+
+        .section-sub {
+            font-size: 14.5px;
+            color: var(--text-sub);
+            line-height: 1.8;
+            margin-bottom: 20px;
+            max-width: 860px;
+        }
+
+        /* ===== CARDS ===== */
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 30px 32px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .card:hover {
+            border-color: var(--border-blue);
+            box-shadow: 0 6px 22px rgba(59, 130, 246, 0.08);
+        }
+
+        .card p {
+            color: var(--text-sub);
+            line-height: 1.85;
+            font-size: 15px;
+            margin-bottom: 14px;
+        }
+
+        .card p:last-child {
+            margin-bottom: 0;
+        }
+
+        .card strong {
+            color: var(--dark);
+        }
+
+        /* ===== ALERT BOX ===== */
+        .alert-box {
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin: 20px 0;
+            font-size: 14.5px;
+            line-height: 1.75;
+        }
+
+        .alert-danger {
+            background: #fef2f2;
+            border-left: 4px solid #ef4444;
+            color: #7f1d1d;
+        }
+
+        .alert-info {
+            background: #eff6ff;
+            border-left: 4px solid var(--primary);
+            color: #1e3a5f;
+        }
+
+        .alert-green {
+            background: #f0fdf4;
+            border-left: 4px solid #10b981;
+            color: #064e3b;
+        }
+
+        /* ===== STAT STRIP ===== */
+        .stat-strip {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 14px;
+            margin: 24px 0;
+        }
+
+        .stat-item {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px 16px;
+            text-align: center;
+            box-shadow: 0 1px 6px rgba(0, 0, 0, 0.04);
+        }
+
+        .stat-num {
+            font-size: 26px;
+            font-weight: 800;
+            color: var(--primary);
+            line-height: 1.1;
+        }
+
+        .stat-desc {
+            font-size: 12px;
+            color: var(--text-sub);
+            margin-top: 5px;
+            line-height: 1.4;
+        }
+
+        /* ===== WOLBACHIA HOW-IT-WORKS ===== */
+        .how-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin: 20px 0;
+        }
+
+        .how-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 22px 20px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+            transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
+        }
+
+        .how-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.1);
+            border-color: var(--border-blue);
+        }
+
+        .how-num {
+            width: 34px;
+            height: 34px;
+            background: var(--primary);
+            border-radius: 50%;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 14px;
+        }
+
+        .how-card h3 {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 7px;
+        }
+
+        .how-card p {
+            font-size: 13px;
+            color: var(--text-sub);
+            line-height: 1.65;
+            margin: 0;
+        }
+
+        /* ===== CONTRIBUTION ARISTAS ===== */
+        .aristas-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        @media (max-width: 640px) {
+            .aristas-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .arista-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 26px 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
+        }
+
+        .arista-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.1);
+            border-color: var(--border-blue);
+        }
+
+        .arista-num {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            font-size: 13px;
+            font-weight: 800;
+            color: white;
+            margin-bottom: 14px;
+        }
+
+        .arista-card h3 {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 10px;
+        }
+
+        .arista-card p {
+            font-size: 13.5px;
+            color: var(--text-sub);
+            line-height: 1.7;
+            margin: 0;
+        }
+
+        /* ===== INSTITUTION CARDS ===== */
+        .inst-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .inst-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
+        }
+
+        .inst-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 28px rgba(59, 130, 246, 0.12);
+            border-color: var(--border-blue);
+        }
+
+        .inst-img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .inst-body {
+            padding: 18px 20px;
+        }
+
+        .inst-acronym {
+            display: inline-block;
+            background: var(--primary-light);
+            color: var(--primary-dark);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.4px;
+            padding: 3px 10px;
+            border-radius: 20px;
+            margin-bottom: 8px;
+        }
+
+        .inst-body h3 {
+            font-size: 14.5px;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 6px;
+            line-height: 1.4;
+        }
+
+        .inst-body p {
+            font-size: 13px;
+            color: var(--text-sub);
+            line-height: 1.65;
+            margin: 0;
+        }
+
+        /* ===== PRIOR THESES ===== */
+        .thesis-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin: 20px 0;
+        }
+
+        .thesis-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 22px 24px;
+            box-shadow: 0 1px 6px rgba(0, 0, 0, 0.04);
+            transition: transform 0.25s, box-shadow 0.25s, border-color 0.25s;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .thesis-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.1);
+            border-color: var(--border-blue);
+        }
+
+        .thesis-date {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        .thesis-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--dark);
+            line-height: 1.45;
+        }
+
+        .thesis-author {
+            font-size: 13.5px;
+            color: var(--text-sub);
+        }
+
+        .thesis-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12.5px;
+            font-weight: 600;
+            color: var(--primary);
+            text-decoration: none;
+            margin-top: 4px;
+            transition: color 0.2s;
+        }
+
+        .thesis-link:hover {
+            color: var(--primary-dark);
+            text-decoration: underline;
+        }
+
+        .thesis-link::after {
+            content: "↗";
+            font-size: 11px;
+        }
+
+        /* ===== ACKNOWLEDGEMENTS ===== */
+        .ack-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin: 20px 0;
+        }
+
+        .ack-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 22px 28px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .ack-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.1);
+            border-color: var(--border-blue);
+        }
+
+        .ack-media {
+            flex-shrink: 0;
+        }
+
+        .ack-logo {
+            width: 72px;
+            height: 72px;
+            object-fit: contain;
+            border-radius: 10px;
+        }
+
+        .ack-photo {
+            width: 68px;
+            height: 68px;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 3px solid var(--primary-light);
+        }
+
+        .ack-body {
+            min-width: 0;
+        }
+
+        .ack-card h3 {
+            font-size: 14.5px;
+            font-weight: 700;
+            color: var(--dark);
+            line-height: 1.4;
+            margin-bottom: 4px;
+        }
+
+        .ack-card p {
+            font-size: 13px;
+            color: var(--text-sub);
+            line-height: 1.65;
+            margin: 0;
+        }
+
+        .ack-tag {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--primary);
+            background: var(--primary-light);
+            padding: 3px 10px;
+            border-radius: 20px;
+            margin-bottom: 8px;
+        }
+
+        @media (max-width: 500px) {
+            .ack-card {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 14px;
+            }
+        }
+
+        /* ===== DIVIDER ===== */
+        .section-divider {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 52px 0;
+        }
+
+        /* ===== FOOTER ===== */
+        footer {
+            position: relative;
+            z-index: 1;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            padding: 28px 20px;
+            color: var(--text-sub);
+            font-size: 13px;
+            background: white;
+        }
+
+        /* ===== ANIMATIONS ===== */
+        @keyframes fadeDown {
+            from {
+                opacity: 0;
+                transform: translateY(-16px);
+            }
+
+            to {
+                opacity: 1;
+                transform: none;
+            }
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: .5;
+                transform: scale(.8);
+            }
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(22px);
+            transition: opacity .65s ease, transform .65s ease;
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: none;
+        }
+
+        .rd1 {
+            transition-delay: .08s;
+        }
+
+        .rd2 {
+            transition-delay: .16s;
+        }
+
+        .rd3 {
+            transition-delay: .24s;
+        }
+
+        .rd4 {
+            transition-delay: .32s;
+        }
+
+        @media (max-width: 640px) {
+            .card {
+                padding: 22px 20px;
+            }
+
+            .inst-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="navbar">
+        <a href="/home" class="nav-logo"><img src="/static/logo.jpg" alt="Logo">MosquitoAI</a>
+        <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+        <div class="nav-links" id="nav-links">
+            <a href="/home">Home</a>
+            <a href="/about" class="active">Proyecto</a>
+            <a href="/model">Modelo IA</a>
+            <a href="/simulation">Simulaci&#243;n</a>
+            <a href="/dashboard">Dashboard</a>
+        </div>
+    </nav>
+
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+        <h1>El <span>Proyecto</span></h1>
+        <p class="lead">
+            De la epidemia de dengue en Paraguay al uso de inteligencia artificial
+            como herramienta estrat&#233;gica para el control vectorial.
+            Una tesis en el marco del proyecto Wolbachia.
+        </p>
+    </div>
+
+    <main>
+
+        <!-- ===== SECCIÓN 1: EL PROBLEMA ===== -->
+        <div class="section reveal">
+            <div class="section-label">El Problema</div>
+            <h2 class="section-title">La Epidemia de Dengue en Paraguay</h2>
+            <div class="card">
+                <p>
+                    El dengue es una enfermedad viral transmitida por el mosquito <em>Aedes aegypti</em>
+                    que representa uno de los <strong>mayores desaf&#237;os de salud p&#250;blica en Paraguay</strong>
+                    desde hace d&#233;cadas. El pa&#237;s sufre brotes anuales de alta intensidad,
+                    con picos epidemiológicos que colapsan el sistema sanitario y generan
+                    miles de hospitalizaciones, p&#233;rdidas económicas y, en los casos m&#225;s graves, muertes.
+                </p>
+                <p>
+                    Paraguay se ubica sistem&#225;ticamente entre los pa&#237;ses de mayor incidencia
+                    de dengue en Am&#233;rica Latina. Las condiciones clim&#225;ticas tropicales y subtropicales,
+                    la urbanizaci&#243;n acelerada y la presencia de criaderos en zonas de alta densidad
+                    poblacional crean un entorno propicio para la proliferación del vector.
+                </p>
+                <div class="alert-box alert-danger">
+                    <strong>Contexto cr&#237;tico:</strong> Solo en los &#250;ltimos a&#241;os, Paraguay ha registrado
+                    brotes con cientos
+                    de miles de casos notificados, situando al <em>Ae. aegypti</em> como el principal vector
+                    de inter&#233;s epidemiol&#243;gico del pa&#237;s. La vigilancia y el control de estas poblaciones
+                    es una prioridad nacional de salud p&#250;blica.
+                </div>
+                <p>
+                    Las herramientas de control tradicionales&mdash;fumigaciones, eliminaci&#243;n de cr&#237;aderos
+                    y campa&#241;as de concientización&mdash;han resultado insuficientes para detener la reemergencia
+                    cíclica del dengue. Esto motiva la b&#250;squeda de estrategias innovadoras y
+                    de mayor alcance para contener la dispersi&#243;n del vector.
+                </p>
+            </div>
+
+            <div class="stat-strip">
+                <div class="stat-item">
+                    <div class="stat-num">&gt;30</div>
+                    <div class="stat-desc">a&#241;os de presencia endémica del dengue en Paraguay</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-num">4</div>
+                    <div class="stat-desc">serotipos circulantes del virus dengue en el pa&#237;s</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-num">N.&#176;&nbsp;1</div>
+                    <div class="stat-desc">vector de inter&#233;s epidemiol&#243;gico: <em>Aedes aegypti</em></div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-num">Urbano</div>
+                    <div class="stat-desc">principal escenario de transmisión: ciudades densamente pobladas</div>
+                </div>
+            </div>
+        </div>
+
+        <hr class="section-divider">
+
+        <!-- ===== SECCIÓN 2: EL GRAN PROYECTO ===== -->
+        <div class="section reveal">
+            <div class="section-label">El Gran Proyecto</div>
+            <h2 class="section-title">El Proyecto Wolbachia en Paraguay</h2>
+            <div class="card">
+                <p>
+                    <strong>Wolbachia</strong> es una bacteria endosimbiótica que infecta naturalmente
+                    a muchos insectos. Cuando se introduce en <em>Ae. aegypti</em>, reduce
+                    dr&#225;sticamente la capacidad del mosquito de transmitir el dengue, el zika,
+                    el chikungunya y la fiebre amarilla. La t&#233;cnica&mdash;desarrollada por el
+                    <em>World Mosquito Program</em>&mdash;no utiliza insecticidas ni modifica genéticamente al insecto:
+                    trabaja con la biolog&#237;a natural del vector.
+                </p>
+                <p>
+                    En Paraguay, el <strong>Proyecto Wolbachia Paraguay</strong>
+                    (<a href="https://wolbachiaparaguay.org/" target="_blank" rel="noopener"
+                        style="color:var(--primary);font-weight:600;">wolbachiaparaguay.org</a>)
+                    busca implementar esta estrategia a escala nacional, liberando mosquitos
+                    portadores de <em>Wolbachia</em> en &#225;reas seleccionadas de alta incidencia.
+                    Es la primera implementaci&#243;n de este tipo en el pa&#237;s y representa una de las
+                    apuestas m&#225;s prometedoras para el control sostenible del dengue.
+                </p>
+            </div>
+
+            <div class="card"
+                style="background: linear-gradient(135deg, #f0fdf4 0%, #eff6ff 100%); border-color: #a7f3d0;">
+                <p style="font-size: 14.5px; color: var(--dark); font-weight: 600; margin-bottom: 12px;">
+                    &#191;Qu&#233; es la Incompatibilidad Citoplasm&#225;tica (IC)?
+                </p>
+                <p>
+                    Cuando un macho portador de <em>Wolbachia</em> se aparea con una hembra
+                    <strong>no infectada</strong>, los huevos no eclosionan&mdash;son inv&#237;ables.
+                    Esto se conoce como <strong>incompatibilidad citoplasm&#225;tica</strong>.
+                    Sin embargo, una hembra infectada puede aparearse tanto con machos infectados como no infectados,
+                    y sus cr&#237;as heredan la bacteria. Este mecanismo genera una <strong>ventaja reproductiva
+                        selectiva</strong>
+                    que permite que Wolbachia se propague naturalmente en la población silvestre.
+                </p>
+                <p>
+                    Con el tiempo, la bacteria se establece en la poblaci&#243;n local de <em>Ae. aegypti</em>,
+                    reduciendo permanentemente su capacidad vectorial sin necesidad de nuevas liberaciones masivas.
+                </p>
+            </div>
+
+            <h3 style="font-size:16px;font-weight:700;color:var(--dark);margin:24px 0 14px;">&#191;C&#243;mo funciona la
+                estrategia?</h3>
+            <div class="how-grid">
+                <div class="how-card reveal rd1">
+                    <div class="how-num">1</div>
+                    <h3>Crianza controlada</h3>
+                    <p>Se cr&#237;an mosquitos <em>Ae. aegypti</em> portadores de <em>Wolbachia</em> en
+                        biofactor&#237;as especializadas bajo condiciones controladas.</p>
+                </div>
+                <div class="how-card reveal rd2">
+                    <div class="how-num">2</div>
+                    <h3>Liberación planificada</h3>
+                    <p>Se liberan mosquitos infectados en &#225;reas urbanas de alta densidad de dengue, siguiendo
+                        planes espaciales basados en datos epidemiol&#243;gicos.</p>
+                </div>
+                <div class="how-card reveal rd3">
+                    <div class="how-num">3</div>
+                    <h3>Establecimiento natural</h3>
+                    <p>Gracias a la IC, <em>Wolbachia</em> se autopropaga por apareamiento, estableci&#233;ndose
+                        progresivamente en la poblaci&#243;n silvestre.</p>
+                </div>
+                <div class="how-card reveal rd4">
+                    <div class="how-num">4</div>
+                    <h3>Reducci&#243;n vectorial</h3>
+                    <p>La bacteria bloquea la replicaci&#243;n viral dentro del mosquito, reduciendo la transmisi&#243;n
+                        de dengue en las &#225;reas de intervenci&#243;n.</p>
+                </div>
+            </div>
+
+            <div class="alert-box alert-green" style="margin-top:20px;">
+                <strong>Se&#241;ales de &#233;xito comprobadas:</strong> en Townsville (Australia), el proyecto redujo
+                los casos de dengue
+                en un <strong>96&thinsp;%</strong> en &#225;reas con alta frecuencia de <em>Wolbachia</em>. En
+                Indonesia, Colombia
+                y Brasil, ensayos clust&#233;r aleatorizados mostraron reducciones de incidencia superiores al
+                <strong>70&ndash;77&thinsp;%</strong>,
+                posicionando a Wolbachia como la intervenci&#243;n antivectorial m&#225;s efectiva probada a escala
+                real.
+            </div>
+        </div>
+
+        <hr class="section-divider">
+
+        <!-- ===== SECCIÓN 3: CONTRIBUCIÓN DE LA TESIS ===== -->
+        <div class="section reveal">
+            <div class="section-label">Nuestra Contribuci&#243;n</div>
+            <h2 class="section-title">El Aporte Tecnol&#243;gico de Esta Tesis</h2>
+            <div class="card">
+                <p>
+                    La estimaci&#243;n de poblaciones de mosquitos es una tarea <strong>extremadamente
+                        compleja</strong>.
+                    La din&#225;mica espacial y temporal de <em>Ae. aegypti</em> en entornos urbanos
+                    depende de m&#250;ltiples factores: estructura del h&#225;bitat, presencia de sitios de cr&#237;a,
+                    condiciones clim&#225;ticas y comportamientos de dispersi&#243;n. Construir modelos precisos
+                    requiere datos cuantitativos de alta resoluci&#243;n&mdash;datos que, en la pr&#225;ctica,
+                    son muy dif&#237;ciles y costosos de adquirir.
+                </p>
+                <p>
+                    El monitoreo tradicional basado en trampas de captura anotadas manualmente genera
+                    informaci&#243;n lenta, localizada y propensa a error humano. Esto limita severamente
+                    la capacidad de construir estimaciones espacio-temporales confiables para la toma
+                    de decisiones estrat&#233;gicas en programas de control vectorial.
+                </p>
+                <p>
+                    <strong>En este marco, nuestra tesis contribuye en dos aristas fundamentales:</strong>
+                </p>
+            </div>
+
+            <div class="aristas-grid">
+                <div class="arista-card reveal rd1">
+                    <div class="arista-num" style="background: var(--primary);">I</div>
+                    <h3>Automatizaci&#243;n y Adquisici&#243;n de Datos</h3>
+                    <p>
+                        Dise&#241;o e implementaci&#243;n de una <strong>trampa inteligente</strong> basada en
+                        visi&#243;n computacional e inteligencia artificial embebida. El sistema detecta,
+                        cuenta y clasifica autom&#225;ticamente los mosquitos capturados, transmitiendo
+                        datos en tiempo real a la nube sin intervenci&#243;n humana. Esto permite generar
+                        series temporales densas y georreferenciadas de capturas, facilitando la calibraci&#243;n
+                        de modelos de din&#225;mica poblacional.
+                    </p>
+                </div>
+                <div class="arista-card reveal rd2">
+                    <div class="arista-num" style="background: #10b981;">II</div>
+                    <h3>Modelado y Simulaci&#243;n de Escenarios</h3>
+                    <p>
+                        Propuesta de un <strong>modelo basado en agentes (ABM)</strong> que simula la dispersi&#243;n
+                        de <em>Ae. aegypti</em> en entornos urbanos georreferenciados. El modelo
+                        permite explorar escenarios estrat&#233;gicos&mdash;como el impacto de diferentes
+                        configuraciones de sitios de cr&#237;a o la cobertura &#243;ptima de liberaciones
+                        Wolbachia&mdash;
+                        apoyando la <strong>toma de decisiones basada en evidencia</strong> en el proyecto de
+                        control vectorial.
+                    </p>
+                </div>
+            </div>
+
+            <div class="alert-box alert-info" style="margin-top: 8px;">
+                Ambas aristas son complementarias: los datos generados por la trampa inteligente alimentan
+                y calibran el ABM, mientras que el modelo permite dise&#241;ar estrategias de monitoreo m&#225;s
+                eficientes
+                para el despliegue futuro de las trampas en campo.
+            </div>
+        </div>
+
+        <hr class="section-divider">
+
+        <!-- ===== SECCIÓN 4: INSTITUCIONES ===== -->
+        <div class="section reveal">
+            <div class="section-label">Instituciones Involucradas</div>
+            <h2 class="section-title">Organizaciones que Respaldan la Tesis</h2>
+            <div class="inst-grid">
+                <div class="inst-card reveal rd1">
+                    <img src="/static/FIUNA_edificio.jpg" alt="Edificio FIUNA — Facultad de Ingenier&#237;a UNA"
+                        class="inst-img">
+                    <div class="inst-body">
+                        <span class="inst-acronym">FIUNA</span>
+                        <h3>Facultad de Ingenier&#237;a<br>Universidad Nacional de Asunci&#243;n</h3>
+                        <p>Casa de estudios de los autores de la tesis. Brinda el marco acad&#233;mico, infraestructura
+                            y orientaci&#243;n cient&#237;fica para el desarrollo del proyecto.</p>
+                    </div>
+                </div>
+                <div class="inst-card reveal rd2">
+                    <img src="/static/NIDTEC_edificio.jpg" alt="Edificio NIDTEC" class="inst-img">
+                    <div class="inst-body">
+                        <span class="inst-acronym">NIDTEC</span>
+                        <h3>N&#250;cleo de Investigaci&#243;n y Desarrollo Tecnol&#243;gico</h3>
+                        <p>Centro de investigaci&#243;n aplicada de la Facultad Polit&#233;cnica de la Universidad
+                            Nacional de Asunci&#243;n, cuya misi&#243;n es impulsar la investigaci&#243;n
+                            cient&#237;fica y tecnol&#243;gica para generar soluciones innovadoras con impacto nacional
+                            e internacional.</p>
+                    </div>
+                </div>
+                <div class="inst-card reveal rd3">
+                    <img src="/static/IICS_edificio.jpg" alt="Edificio IICS" class="inst-img">
+                    <div class="inst-body">
+                        <span class="inst-acronym">IICS</span>
+                        <h3>Instituto de Investigaciones en Ciencias de la Salud</h3>
+                        <p>Organismo dependiente de la UNA especializado en investigaci&#243;n biom&#233;dica y
+                            epidemiol&#243;gica. Proporciona el marco epidemiol&#243;gico y acceso a datos de campo
+                            sobre poblaciones de mosquitos en Paraguay.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <hr class="section-divider">
+
+        <!-- ===== SECCIÓN 5: TESIS ANTERIORES ===== -->
+        <div class="section reveal">
+            <div class="section-label">Antecedentes Acad&#233;micos</div>
+            <h2 class="section-title">Tesis Anteriores en la FIUNA sobre el Tema</h2>
+            <p class="section-sub">
+                Este trabajo se inscribe en una l&#237;nea de investigaci&#243;n acumulativa desarrollada en la Facultad
+                de Ingenier&#237;a de la UNA.
+                Las siguientes tesis constituyen las bases sobre las que este proyecto innova y extiende sus alcances.
+            </p>
+            <div class="thesis-list">
+                <div class="thesis-card reveal rd1">
+                    <div class="thesis-date">29 / 08 / 2025</div>
+                    <div class="thesis-title">Dise&#241;o e Implementaci&#243;n de un Sistema Mecatr&#243;nico de
+                        Clasificaci&#243;n de Mosquitos</div>
+                    <div class="thesis-author">H&#233;ctor Takashi Honge Kudo</div>
+                    <a class="thesis-link" href="https://www.ing.una.py/FIUNA3/?p=80882" target="_blank"
+                        rel="noopener">Ver en repositorio FIUNA</a>
+                </div>
+                <div class="thesis-card reveal rd2">
+                    <div class="thesis-date">26 / 01 / 2026</div>
+                    <div class="thesis-title">Implementaci&#243;n de un Detector de Frecuencia de Aleteo Basado en Luz
+                        Infrarroja y Mejoras en un Sistema Automatizado Para la Clasificaci&#243;n de Mosquitos</div>
+                    <div class="thesis-author">Normann Alexander Zichner von Schmeling</div>
+                    <a class="thesis-link" href="https://www.ing.una.py/FIUNA3/?p=83704" target="_blank"
+                        rel="noopener">Ver en repositorio FIUNA</a>
+                </div>
+                <div class="thesis-card reveal rd3">
+                    <div class="thesis-date">13 / 02 / 2026</div>
+                    <div class="thesis-title">Trampa Inteligente para Detecci&#243;n de Mosquitos basada en IA</div>
+                    <div class="thesis-author">Diego C&#233;sar Balbuena Duarte &amp; Mathias Rodolfo Barrios Pereira
+                    </div>
+                    <a class="thesis-link" href="https://www.ing.una.py/FIUNA3/?p=84014" target="_blank"
+                        rel="noopener">Ver en repositorio FIUNA</a>
+                </div>
+            </div>
+        </div>
+
+        <hr class="section-divider">
+
+        <!-- ===== SECCIÓN 6: AGRADECIMIENTOS ===== -->
+        <div class="section reveal">
+            <div class="section-label">Reconocimientos</div>
+            <h2 class="section-title">Agradecimientos y Financiamiento</h2>
+            <p class="section-sub">
+                Esta investigaci&#243;n no habr&#237;a sido posible sin el apoyo institucional, financiero y
+                cient&#237;fico
+                de las siguientes organizaciones y personas.
+            </p>
+            <div class="ack-list">
+                <div class="ack-card reveal rd1">
+                    <div class="ack-media">
+                        <img src="/static/CONACYT_logo.png" alt="Logo CONACYT" class="ack-logo">
+                    </div>
+                    <div class="ack-body">
+                        <div class="ack-tag">Financiamiento Nacional</div>
+                        <h3>CONACYT Paraguay</h3>
+                        <p>En el marco del proyecto <strong
+                                style="color:var(--dark);">FEEI&#8209;CONACYT&#8209;PROCIENCIA &mdash; ESTR01&#8209;23
+                                ARASY</strong></p>
+                    </div>
+                </div>
+                <div class="ack-card reveal rd2">
+                    <div class="ack-media">
+                        <img src="/static/WolBloc_Logo.jpg" alt="Logo WolBloc — Wellcome Trust" class="ack-logo">
+                    </div>
+                    <div class="ack-body">
+                        <div class="ack-tag">Financiamiento Internacional</div>
+                        <h3>Consortium Wolbloc &mdash; Wellcome Trust</h3>
+                        <p>Project No.&nbsp;<strong style="color:var(--dark);">226166 / Z / 22 / Z</strong></p>
+                    </div>
+                </div>
+                <div class="ack-card reveal rd3">
+                    <div class="ack-media">
+                        <img src="/static/members/Claudia_Pio.jpg" alt="Dra. Claudia Pio Ferreira" class="ack-photo">
+                    </div>
+                    <div class="ack-body">
+                        <div class="ack-tag">Colaboraci&#243;n Cient&#237;fica</div>
+                        <h3>Dra. Claudia Pio Ferreira</h3>
+                        <p>IBB &mdash; Departamento de Bioestad&#237;stica &mdash; UNESP Botucatu, SP, Brasil</p>
+                    </div>
+                </div>
+                <div class="ack-card reveal rd4">
+                    <div class="ack-media">
+                        <img src="/static/members/Nilsa_Gomez.jpg" alt="Dra. Nilsa G&#243;mez" class="ack-photo">
+                    </div>
+                    <div class="ack-body">
+                        <div class="ack-tag">Colaboraci&#243;n Cient&#237;fica</div>
+                        <h3>Dra. Nilsa G&#243;mez</h3>
+                        <p>Instituto de Investigaciones en Ciencias de la Salud (IICS) &mdash; Asunci&#243;n, Paraguay
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <footer>
+        &copy; 2026 Aplicación de Deep Learning y Modelado Basado en Agentes para el Desarrollo de una Trampa
+        Inteligente de Mosquitos &mdash; Trabajo Final de Grado &middot; Facultad de Ingenier&#237;a, UNA
+    </footer>
+
+    <script>
+        /* Hamburger */
+        document.getElementById('hamburger').addEventListener('click', function () {
+            this.classList.toggle('open');
+            document.getElementById('nav-links').classList.toggle('open');
+        });
+        document.querySelectorAll('#nav-links a').forEach(a => a.addEventListener('click', () => {
+            document.getElementById('hamburger').classList.remove('open');
+            document.getElementById('nav-links').classList.remove('open');
+        }));
+
+        /* Scroll reveal */
+        const obs = new IntersectionObserver(entries => entries.forEach(e => {
+            if (e.isIntersecting) e.target.classList.add('visible');
+        }), { threshold: 0.07 });
+        document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+    </script>
+</body>
+
+</html>

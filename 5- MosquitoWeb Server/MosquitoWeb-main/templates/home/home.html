@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MosquitoAI — Trabajo Final de Grado</title>
+    <meta name="description"
+        content="MosquitoAI: sistema de vigilancia entomológica con IA embebida y simulación ABM para el control del dengue en Paraguay, en el marco del Proyecto Wolbachia.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #1d4ed8;
+            --primary-light: #eff6ff;
+            --dark: #1f2937;
+            --text: #475569;
+            --text-sub: #64748b;
+            --bg: #eef2f5;
+            --card-bg: #ffffff;
+            --border: #e2e8f0;
+            --border-blue: rgba(59, 130, 246, 0.25);
+            --success: #10b981;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            width: 60vw;
+            height: 60vw;
+            max-width: 700px;
+            max-height: 700px;
+            transform: translate(-50%, -50%);
+            background: url("/static/logo.jpg") no-repeat center;
+            background-size: contain;
+            opacity: 0.04;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ===== NAVBAR ===== */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 58px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 16px;
+            color: var(--dark);
+            text-decoration: none;
+        }
+
+        .nav-logo img {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            object-fit: cover;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: var(--text);
+            text-decoration: none;
+            padding: 7px 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .nav-links a:hover {
+            background: #f1f5f9;
+            color: var(--dark);
+        }
+
+        .nav-links a.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            cursor: pointer;
+            padding: 6px;
+            border: none;
+            background: transparent;
+        }
+
+        .hamburger span {
+            display: block;
+            width: 22px;
+            height: 2px;
+            background: var(--dark);
+            border-radius: 2px;
+            transition: all .3s;
+        }
+
+        .hamburger.open span:nth-child(1) {
+            transform: translateY(7px) rotate(45deg);
+        }
+
+        .hamburger.open span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .hamburger.open span:nth-child(3) {
+            transform: translateY(-7px) rotate(-45deg);
+        }
+
+        @media (max-width: 760px) {
+            .hamburger {
+                display: flex;
+            }
+
+            .nav-links {
+                display: none;
+                flex-direction: column;
+                gap: 2px;
+                position: fixed;
+                top: 58px;
+                left: 0;
+                right: 0;
+                background: white;
+                border-bottom: 1px solid var(--border);
+                padding: 10px 16px 16px;
+                box-shadow: 0 4px 16px rgba(0, 0, 0, .08);
+                z-index: 99;
+            }
+
+            .nav-links.open {
+                display: flex;
+            }
+
+            .nav-links a {
+                padding: 10px 14px;
+                border-radius: 8px;
+                width: 100%;
+            }
+        }
+
+        /* ===== HERO ===== */
+        .hero {
+            position: relative;
+            z-index: 1;
+            min-height: 96vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 90px 24px 70px;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            color: var(--primary);
+            padding: 6px 16px;
+            border-radius: 50px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 28px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            animation: fadeDown 0.8s ease both;
+        }
+
+        .hero-badge::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background: var(--primary);
+            border-radius: 50%;
+            animation: pulse 1.8s infinite;
+        }
+
+        .hero h1 {
+            font-size: clamp(32px, 6vw, 66px);
+            font-weight: 800;
+            line-height: 1.1;
+            color: var(--dark);
+            max-width: 880px;
+            animation: fadeDown 0.8s 0.1s ease both;
+        }
+
+        .hero h1 span {
+            color: var(--primary);
+        }
+
+        .hero-sub {
+            max-width: 620px;
+            margin: 20px auto 16px;
+            font-size: clamp(14px, 2.2vw, 17px);
+            color: var(--text);
+            line-height: 1.75;
+            animation: fadeDown 0.8s 0.2s ease both;
+        }
+
+        .hero-context {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(90deg, #f0fdf4, #eff6ff);
+            border: 1px solid #a7f3d0;
+            border-radius: 10px;
+            padding: 10px 18px;
+            font-size: 13px;
+            color: #065f46;
+            font-weight: 500;
+            margin-bottom: 32px;
+            max-width: 600px;
+            animation: fadeDown 0.8s 0.25s ease both;
+        }
+
+        .hero-context strong {
+            color: #047857;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+            animation: fadeDown 0.8s 0.3s ease both;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            padding: 13px 28px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 15px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.45);
+        }
+
+        .btn-outline {
+            background: white;
+            color: var(--dark);
+            padding: 13px 28px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 15px;
+            border: 1px solid var(--border);
+            transition: all 0.2s;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .scroll-hint {
+            position: absolute;
+            bottom: 28px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-sub);
+            font-size: 11px;
+            animation: fadeIn 1s 1s ease both;
+        }
+
+        .scroll-mouse {
+            width: 20px;
+            height: 30px;
+            border: 2px solid #cbd5e1;
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            padding-top: 4px;
+        }
+
+        .scroll-mouse::after {
+            content: '';
+            width: 3px;
+            height: 6px;
+            background: var(--primary);
+            border-radius: 2px;
+            animation: scrollBob 1.5s infinite;
+        }
+
+        /* ===== GENERIC SECTION ===== */
+        section {
+            position: relative;
+            z-index: 1;
+            padding: 72px 24px;
+        }
+
+        .section-label {
+            text-align: center;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: clamp(22px, 3.5vw, 36px);
+            font-weight: 800;
+            color: var(--dark);
+            margin-bottom: 12px;
+        }
+
+        .section-sub {
+            text-align: center;
+            color: var(--text-sub);
+            max-width: 580px;
+            margin: 0 auto 44px;
+            font-size: 15.5px;
+            line-height: 1.75;
+        }
+
+        /* ===== CONTEXT STRIP ===== */
+        .context-strip {
+            background: white;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            padding: 52px 24px;
+        }
+
+        .context-inner {
+            max-width: 1060px;
+            margin: 0 auto;
+        }
+
+        .context-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+            align-items: center;
+        }
+
+        @media (max-width: 720px) {
+            .context-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .context-text h2 {
+            font-size: clamp(20px, 3vw, 28px);
+            font-weight: 800;
+            color: var(--dark);
+            margin-bottom: 14px;
+            line-height: 1.25;
+        }
+
+        .context-text h2 span {
+            color: var(--primary);
+        }
+
+        .context-text p {
+            font-size: 14.5px;
+            color: var(--text-sub);
+            line-height: 1.85;
+            margin-bottom: 14px;
+        }
+
+        .context-text p:last-child {
+            margin-bottom: 0;
+        }
+
+        .context-text strong {
+            color: var(--dark);
+        }
+
+        .context-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 20px;
+        }
+
+        .pill {
+            background: var(--primary-light);
+            border: 1px solid #bfdbfe;
+            color: var(--primary-dark);
+            font-size: 12px;
+            font-weight: 600;
+            padding: 5px 13px;
+            border-radius: 20px;
+        }
+
+        .context-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        .cstat {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 20px 18px;
+            text-align: center;
+        }
+
+        .cstat-num {
+            font-size: 30px;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .cstat-desc {
+            font-size: 12px;
+            color: var(--text-sub);
+            margin-top: 5px;
+            line-height: 1.4;
+        }
+
+        /* ===== SECTION CARDS (page summaries) ===== */
+        .pages-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .page-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px 26px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
+            text-decoration: none;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .page-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--border-blue);
+            box-shadow: 0 10px 28px rgba(59, 130, 246, 0.12);
+        }
+
+        .page-card-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            color: var(--primary);
+        }
+
+        .page-card-tag::before {
+            content: "";
+            display: block;
+            width: 14px;
+            height: 2px;
+            background: var(--primary);
+            border-radius: 2px;
+        }
+
+        .page-card h3 {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--dark);
+            line-height: 1.3;
+        }
+
+        .page-card p {
+            font-size: 13.5px;
+            color: var(--text-sub);
+            line-height: 1.7;
+            flex: 1;
+        }
+
+        .page-card-footer {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--primary);
+            margin-top: 4px;
+        }
+
+        .page-card-footer::after {
+            content: "→";
+            transition: transform 0.2s;
+        }
+
+        .page-card:hover .page-card-footer::after {
+            transform: translateX(4px);
+        }
+
+        .page-card-accent {
+            border-top: 3px solid var(--primary);
+        }
+
+        /* ===== TWO ARISTAS ===== */
+        .aristas-section {
+            background: white;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            padding: 72px 24px;
+        }
+
+        .aristas-inner {
+            max-width: 1060px;
+            margin: 0 auto;
+        }
+
+        .aristas-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-top: 16px;
+        }
+
+        @media (max-width: 680px) {
+            .aristas-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .arista {
+            border-radius: 16px;
+            padding: 28px 26px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .arista:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.1);
+        }
+
+        .arista-i {
+            background: linear-gradient(135deg, #eff6ff, #dbeafe);
+            border: 1px solid #bfdbfe;
+        }
+
+        .arista-ii {
+            background: linear-gradient(135deg, #f0fdf4, #d1fae5);
+            border: 1px solid #a7f3d0;
+        }
+
+        .arista-num {
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+
+        .arista-i .arista-num {
+            color: var(--primary-dark);
+        }
+
+        .arista-ii .arista-num {
+            color: #065f46;
+        }
+
+        .arista h3 {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 10px;
+        }
+
+        .arista p {
+            font-size: 13.5px;
+            color: var(--text-sub);
+            line-height: 1.75;
+            margin-bottom: 14px;
+        }
+
+        .arista p:last-child {
+            margin-bottom: 0;
+        }
+
+        .arista ul {
+            margin: 10px 0 0 16px;
+        }
+
+        .arista ul li {
+            font-size: 13px;
+            color: var(--text-sub);
+            margin-bottom: 6px;
+            line-height: 1.6;
+        }
+
+        /* ===== TEAM ===== */
+        .team-grid {
+            display: flex;
+            justify-content: center;
+            gap: 52px;
+            flex-wrap: wrap;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .member {
+            text-align: center;
+            cursor: pointer;
+        }
+
+        .member img {
+            width: 150px;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 3px solid var(--border-blue);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
+        }
+
+        .member:hover img {
+            transform: scale(1.07);
+            border-color: var(--primary);
+            box-shadow: 0 8px 28px rgba(59, 130, 246, 0.25);
+        }
+
+        .member-name {
+            margin-top: 12px;
+            font-weight: 700;
+            color: var(--dark);
+            font-size: 16px;
+        }
+
+        .member-role {
+            color: var(--primary);
+            font-size: 13px;
+            margin-top: 3px;
+        }
+
+        /* ===== MODAL ===== */
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.5);
+            backdrop-filter: blur(6px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            width: 100%;
+            max-width: 540px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            animation: modalIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .modal-grid {
+            display: grid;
+            grid-template-columns: 110px 1fr;
+            gap: 22px;
+            align-items: start;
+        }
+
+        .modal-img {
+            width: 110px;
+            height: 110px;
+            border-radius: 12px;
+            object-fit: cover;
+            border: 2px solid var(--border-blue);
+        }
+
+        .modal-text h2 {
+            color: var(--dark);
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .modal-role {
+            color: var(--primary);
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .modal-text p {
+            color: var(--text-sub);
+            font-size: 14px;
+            margin: 5px 0;
+        }
+
+        .modal-text p b {
+            color: var(--dark);
+        }
+
+        .modal-footer {
+            margin-top: 22px;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .close-btn {
+            padding: 8px 18px;
+            border: 1px solid var(--border);
+            background: white;
+            color: var(--text);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s;
+        }
+
+        .close-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        @media (max-width: 600px) {
+            .modal-grid {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .modal-img {
+                margin: 0 auto;
+            }
+        }
+
+        /* ===== FOOTER ===== */
+        footer {
+            position: relative;
+            z-index: 1;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            padding: 28px 20px;
+            color: var(--text-sub);
+            font-size: 13px;
+            background: white;
+        }
+
+        /* ===== ANIMATIONS ===== */
+        @keyframes fadeDown {
+            from {
+                opacity: 0;
+                transform: translateY(-18px);
+            }
+
+            to {
+                opacity: 1;
+                transform: none;
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: .5;
+                transform: scale(.8);
+            }
+        }
+
+        @keyframes scrollBob {
+
+            0%,
+            100% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+
+            50% {
+                transform: translateY(5px);
+                opacity: .3;
+            }
+        }
+
+        @keyframes modalIn {
+            from {
+                opacity: 0;
+                transform: scale(.85) translateY(16px);
+            }
+
+            to {
+                opacity: 1;
+                transform: none;
+            }
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(24px);
+            transition: opacity .6s ease, transform .6s ease;
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: none;
+        }
+
+        .rd1 {
+            transition-delay: .08s;
+        }
+
+        .rd2 {
+            transition-delay: .16s;
+        }
+
+        .rd3 {
+            transition-delay: .24s;
+        }
+
+        .rd4 {
+            transition-delay: .32s;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <a href="/home" class="nav-logo"><img src="/static/logo.jpg" alt="Logo">MosquitoAI</a>
+        <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+        <div class="nav-links" id="nav-links">
+            <a href="/home" class="active">Home</a>
+            <a href="/about">Proyecto</a>
+            <a href="/model">Modelo IA</a>
+            <a href="/simulation">Simulaci&#243;n</a>
+            <a href="/dashboard">Dashboard</a>
+        </div>
+    </nav>
+
+    <!-- ===== HERO ===== -->
+    <div class="hero">
+        <h1>Aplicación de Deep Learning y Modelado Basado en Agentes para el Desarrollo de una <span>Trampa Inteligente
+                de Mosquitos</span></h1>
+        <p class="hero-sub">
+            Una tesis que combina una trampa inteligente de clasificaci&#243;n de mosquitos
+            y un modelo de simulaci&#243;n espacial, contribuyendo al control del dengue
+            en el marco del Proyecto Wolbachia Paraguay.
+        </p>
+        <div class="hero-buttons">
+            <a href="/about" class="btn-primary">Conocer el Proyecto</a>
+            <a href="/model" class="btn-outline">Ver Modelo IA</a>
+            <a href="/simulation" class="btn-outline">Ver Simulaci&#243;n</a>
+            <a href="/dashboard" class="btn-outline">Dashboard en Vivo</a>
+        </div>
+    </div>
+
+    <!-- ===== CONTEXT STRIP ===== -->
+    <div class="context-strip">
+        <div class="context-inner">
+            <div class="context-text reveal">
+                <h2>El problema: dengue en <span>Paraguay</span></h2>
+                <p>
+                    El <em>Aedes aegypti</em> es el principal vector de dengue, zika y chikungunya en Paraguay.
+                    El pa&#237;s sufre brotes anuales con cientos de miles de casos notificados, constituyendo
+                    una <strong>amenaza cr&#237;tica para la salud p&#250;blica</strong>. Las estrategias
+                    de control tradicionales son insuficientes para frenar la reemergencia sostenida del virus.
+                </p>
+                <p>
+                    El <strong>Proyecto Wolbachia Paraguay</strong> busca liberar mosquitos portadores de la
+                    bacteria <em>Wolbachia</em>&mdash;que bloquea naturalmente la replicaci&#243;n viral&mdash;para
+                    reducir la transmisi&#243;n de manera sostenible. Esta tesis aporta la <strong>infraestructura
+                        tecnol&#243;gica de datos</strong> que dicho proyecto necesita para escalar.
+                </p>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ===== TWO ARISTAS ===== -->
+    <div class="aristas-section">
+        <div class="aristas-inner">
+            <p class="section-label">Contribuci&#243;n de la Tesis</p>
+            <h2 class="section-title">Dos aristas tecnol&#243;gicas complementarias</h2>
+            <p class="section-sub">
+                Estimaci&#243;n de poblaciones y adquisici&#243;n de datos de mosquitos son tareas extremadamente
+                complejas.
+                Esta tesis ataca el problema desde dos &#225;ngulos que se retroalimentan.
+            </p>
+            <div class="aristas-row">
+                <div class="arista arista-i reveal rd1">
+                    <div class="arista-num">Arista I &mdash; Trampa Inteligente</div>
+                    <h3>Automatizaci&#243;n y Adquisici&#243;n de Datos</h3>
+                    <p>
+                        Se dise&#241;&#243; e implement&#243; una trampa de captura con c&#225;mara embebida
+                        (Raspberry Pi 5) que ejecuta un pipeline de inferencia en tiempo real:
+                    </p>
+                    <ul>
+                        <li><strong>Detecci&#243;n:</strong> YOLOv8s entrenado con dataset propio (256&times;256)</li>
+                        <li><strong>Clasificaci&#243;n:</strong> MobileNetV3-Large exportado a ONNX</li>
+                        <li><strong>Telemetr&#237;a:</strong> env&#237;o autom&#225;tico a PostgreSQL / Supabase</li>
+                        <li><strong>Sensores:</strong> temperatura y humedad (DHT22)</li>
+                    </ul>
+                </div>
+                <div class="arista arista-ii reveal rd2">
+                    <div class="arista-num">Arista II &mdash; Simulador ABM</div>
+                    <h3>Modelado y Simulaci&#243;n de Escenarios</h3>
+                    <p>
+                        Se implement&#243; un modelo basado en agentes que simula la dispersi&#243;n
+                        espacio-temporal de <em>Ae. aegypti</em> sobre grillas georreferenciadas
+                        derivadas de OpenStreetMap:
+                    </p>
+                    <ul>
+                        <li><strong>Entorno:</strong> grilla urbana con tipos de terreno (OSM + ESRI)</li>
+                        <li><strong>Agentes:</strong> estados J, M, F<sub>U</sub>, F<sub>G</sub>, D con din&#225;mica
+                            estoc&#225;stica</li>
+                        <li><strong>Movimiento:</strong> n&#250;cleo de Markov guiado por campo de potencial</li>
+                        <li><strong>Aplicaci&#243;n:</strong> an&#225;lisis de escenarios para liberaciones Wolbachia
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== PAGE SUMMARIES ===== -->
+    <section>
+        <p class="section-label">Navegar el sitio</p>
+        <h2 class="section-title">Explor&#225; cada secci&#243;n</h2>
+        <p class="section-sub">
+            Cada p&#225;gina profundiza en una dimensi&#243;n del proyecto, desde el contexto epidemiol&#243;gico
+            hasta los resultados en tiempo real.
+        </p>
+        <div class="pages-grid">
+            <a href="/about" class="page-card page-card-accent reveal rd1">
+                <div class="page-card-tag">Proyecto</div>
+                <h3>El Problema, Wolbachia y la Tesis</h3>
+                <p>
+                    Contexto de la epidemia de dengue en Paraguay, qu&#233; es el Proyecto Wolbachia
+                    y c&#243;mo funciona la incompatibilidad citoplasm&#225;tica. Detalle de las dos aristas
+                    de la contribuci&#243;n tecnol&#243;gica, instituciones involucradas, tesis anteriores
+                    en la FIUNA y reconocimientos.
+                </p>
+                <div class="page-card-footer">Ver Proyecto</div>
+            </a>
+            <a href="/model" class="page-card page-card-accent reveal rd2">
+                <div class="page-card-tag">Modelo IA</div>
+                <h3>Pipeline de Inferencia en Cascada</h3>
+                <p>
+                    Documentaci&#243;n del modelo YOLOv8s para detecci&#243;n y MobileNetV3-Large para
+                    clasificaci&#243;n de g&#233;nero. Hiperpar&#225;metros optimizados con Optuna, exportaci&#243;n
+                    ONNX, m&#233;tricas de evaluaci&#243;n y demo interactiva de inferencia en vivo.
+                </p>
+                <div class="page-card-footer">Ver Modelo IA</div>
+            </a>
+            <a href="/simulation" class="page-card page-card-accent reveal rd3">
+                <div class="page-card-tag">Simulaci&#243;n</div>
+                <h3>Grid Generator y Simulador ABM</h3>
+                <p>
+                    Generador interactivo de grillas urbanas a partir de datos de OpenStreetMap.
+                    Documentaci&#243;n formal del modelo basado en agentes: entorno, estados, din&#225;mica
+                    juvenil y adulta, movimiento estoc&#225;stico y resultados de simulaci&#243;n.
+                </p>
+                <div class="page-card-footer">Ver Simulaci&#243;n</div>
+            </a>
+            <a href="/dashboard" class="page-card page-card-accent reveal rd4">
+                <div class="page-card-tag">Dashboard</div>
+                <h3>Monitoreo en Tiempo Real</h3>
+                <p>
+                    Panel de control con detecciones enviadas autom&#225;ticamente por las trampas
+                    inteligentes desplegadas. Visualizaci&#243;n de im&#225;genes anotadas, conteos de
+                    hembras y machos, temperatura, humedad y registro hist&#243;rico.
+                </p>
+                <div class="page-card-footer">Ver Dashboard</div>
+            </a>
+        </div>
+    </section>
+
+    <!-- ===== TEAM ===== -->
+    <section style="background: white; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">
+        <p class="section-label">Equipo</p>
+        <h2 class="section-title">Autores del Trabajo Final</h2>
+        <p class="section-sub">Ingeniería Mecatr&#243;nica &mdash; Facultad de Ingenier&#237;a, Universidad Nacional de
+            Asunci&#243;n</p>
+        <div class="team-grid">
+            <div class="member reveal" onclick="openModal('lucas')">
+                <img src="/static/members/Lucas_Pin.jpg" alt="Lucas Pin">
+                <div class="member-name">Lucas Pin</div>
+                <div class="member-role">Ingenier&#237;a Mecatr&#243;nica</div>
+            </div>
+            <div class="member reveal rd2" onclick="openModal('matteo')">
+                <img src="/static/members/Matteo_Martinez.jpg" alt="Matteo Martinez">
+                <div class="member-name">Matteo Martinez</div>
+                <div class="member-role">Ingenier&#237;a Mecatr&#243;nica</div>
+            </div>
+            <div class="member reveal rd3" onclick="openModal('diego')">
+                <img src="/static/members/Diego_Stalder.jpg" alt="Diego Stalder">
+                <div class="member-name">Diego Stalder</div>
+                <div class="member-role">Tutor de la Tesis</div>
+            </div>
+            <div class="member reveal rd4" onclick="openModal('christian')">
+                <img src="/static/members/Christian_Schaerer.jpg" alt="Christian Schaerer">
+                <div class="member-name">Christian Schaerer</div>
+                <div class="member-role">Co-Tutor de la Tesis</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- MODAL -->
+    <div id="modal" class="modal" onclick="closeModal(event)">
+        <div class="modal-content" id="modal-content"></div>
+    </div>
+
+    <footer>
+        &copy; 2026 Aplicación de Deep Learning y Modelado Basado en Agentes para el Desarrollo de una Trampa
+        Inteligente de Mosquitos &mdash; Trabajo Final de Grado &middot; Facultad de Ingenier&#237;a, UNA
+    </footer>
+
+    <script>
+        const members = {
+            lucas: {
+                img: '/static/members/Lucas_Pin.jpg', name: 'Lucas Pin',
+                role: 'Estudiante de Ingenier&#237;a Mecatr&#243;nica',
+                desc: '////////////.',
+                email: 'lucas.pin@fiuna.edu.py', phone: '+595 981 106717'
+            },
+            matteo: {
+                img: '/static/members/Matteo_Martinez.jpg', name: 'Matteo Martinez',
+                role: 'Estudiante de Ingenier&#237;a Mecatr&#243;nica',
+                desc: '////////////',
+                email: 'mnmartinez@fiuna.edu.py', phone: '+595 982 561491'
+            },
+            diego: {
+                img: '/static/members/Diego_Stalder.jpg', name: 'Diego Stalder',
+                role: 'Tutor de la Tesis',
+                desc: 'Tutor del Trabajo Final de Grado. Docente e investigador de la Facultad de Ingenier&#237;a, UNA.',
+                email: 'dstalder@ing.una.py', phone: '+595 961 640205'
+            },
+            christian: {
+                img: '/static/members/Christian_Schaerer.jpg', name: 'Christian Schaerer',
+                role: 'Co-Tutor de la Tesis',
+                desc: 'Co-Tutor del Trabajo Final de Grado. Investigador del N&#250;cleo de Investigaci&#243;n y Desarrollo Tecnol&#243;gico (NIDTEC).',
+                email: 'chris.schaerer@gmail.com', phone: '+595 962 651880'
+            }
+        };
+
+        function openModal(person) {
+            const m = members[person];
+            document.getElementById('modal-content').innerHTML = `
+                <div class="modal-grid">
+                    <img src="${m.img}" class="modal-img" alt="${m.name}">
+                    <div class="modal-text">
+                        <h2>${m.name}</h2>
+                        <div class="modal-role">${m.role}</div>
+                        <p>${m.desc}</p>
+                        <p><b>Email:</b> ${m.email}</p>
+                        <p><b>Tel&eacute;fono:</b> ${m.phone}</p>
+                    </div>
+                </div>
+                <div class="modal-footer"><button class="close-btn" onclick="closeModal()">Cerrar</button></div>
+            `;
+            document.getElementById('modal').classList.add('active');
+        }
+        function closeModal(event) {
+            if (!event || event.target.id === 'modal') document.getElementById('modal').classList.remove('active');
+        }
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+        document.getElementById('hamburger').addEventListener('click', function () {
+            this.classList.toggle('open');
+            document.getElementById('nav-links').classList.toggle('open');
+        });
+        document.querySelectorAll('#nav-links a').forEach(a => a.addEventListener('click', () => {
+            document.getElementById('hamburger').classList.remove('open');
+            document.getElementById('nav-links').classList.remove('open');
+        }));
+
+        const obs = new IntersectionObserver(entries => entries.forEach(e => {
+            if (e.isIntersecting) e.target.classList.add('visible');
+        }), { threshold: 0.08 });
+        document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+    </script>
+</body>
+
+</html>

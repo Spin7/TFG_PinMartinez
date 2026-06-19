@@ -1,0 +1,28 @@
+####### ####### CAMERA ####### #######
+####### Camera installation and testing #######
+
+Installation:
+sudo apt install -y libcamera-dev libcamera-apps
+
+List connected cameras:
+rpicam-hello --list-cameras
+
+Open the camera for 5 seconds:
+rpicam-hello -t 5000
+
+Take a photo:
+rpicam-jpeg -o photo.jpg
+
+View the taken photo:
+xdg-open photo.jpg
+
+Take a photo with capture settings:
+rpicam-still -o photo.png -t 2000 --width 1920 --height 1080
+
+Record a video for 10 seconds:
+rpicam-vid -o video.h264 -t 10000
+
+####### Using the camera with Python #######
+
+Library to install:
+sudo apt install -y python3-picamera2

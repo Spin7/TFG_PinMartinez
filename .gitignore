@@ -1,0 +1,60 @@
+# ─── Python ───────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+.env
+*.egg-info/
+dist/
+build/
+
+# ─── Jupyter ──────────────────────────────────────────────────────────────────
+.ipynb_checkpoints/
+
+# ─── Simulation cache ─────────────────────────────────────────────────────────
+1- Agent Base Model Simulation/Agent_simulationV2/cache/
+1- Agent Base Model Simulation/Agent_simulationV2/__pycache__/
+
+# ─── YOLO training runs (thousands of files, auto-generated) ──────────────────
+2- Vision AI Model/WORKSPACE_CASCADE/1_YOLO/runs/
+2- Vision AI Model/WORKSPACE_CASCADE/Trainers/Yolo_Trainer/runs/
+2- Vision AI Model/WORKSPACE_CASCADE/1_YOLO/optuna.db
+2- Vision AI Model/WORKSPACE_CASCADE/Trainers/Yolo_Trainer/optuna.db
+
+# ─── Large datasets (>100 MB — use Hugging Face / Kaggle instead) ──────────────
+2- Vision AI Model/WORKSPACE_CASCADE/0_Datasets/Mosquitoes_dataset.zip
+2- Vision AI Model/WORKSPACE_CASCADE/0_Datasets/Male_and_female.zip
+2- Vision AI Model/WORKSPACE_CASCADE/0_Datasets/Mosquitoes_dataset/
+2- Vision AI Model/WORKSPACE_CASCADE/0_Datasets/Male_and_female/
+2- Vision AI Model/WORKSPACE_CASCADE/0_Datasets/Male_and_female_cls/
+
+# ─── Redundant HTML export (notebook already present) ─────────────────────────
+1- Agent Base Model Simulation/OvitrampasAsuncion.html
+
+# ─── LaTeX ZIP duplicates (PDFs already present) ──────────────────────────────
+0- Ante Proyecto/Latex ZIP projects/
+7- TFG Memory/Latex ZIP projects/
+
+# ─── Demo video (host on YouTube and link from README) ────────────────────────
+Multimedia/Trap_demo.mp4
+
+# ─── Institutional / personal documents ───────────────────────────────────────
+CamScanner 06-09-2026 13.50.pdf
+1596_2025_011_Actualizacion_Reglamento_TFG.pdf
+
+# ─── Third-party reference PDFs (copyright — link from README instead) ────────
+References/1- Simulacion Agentes/*.pdf
+References/1- Simulacion Agentes/Libros/
+References/2- Trampa/
+References/3- Problema Epidemiologico/
+References/4- FIUNA TFG Linea Mosquitos/
+
+# ─── OS files ─────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ─── IDEs ─────────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.suo
+*.user

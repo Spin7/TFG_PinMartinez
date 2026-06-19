@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+
+    <!-- 🔥 CRÍTICO para responsive -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Home — YOLO Project</title>
+
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --dark: #1f2937;
+            --text: #475569;
+            --bg: #eef2f5;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: var(--bg);
+            position: relative;
+        }
+
+        /* WATERMARK */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            width: 60vw;
+            height: 60vw;
+            max-width: 800px;
+            max-height: 800px;
+            transform: translate(-50%, -50%);
+            background: url("/static/logo.jpg") no-repeat center;
+            background-size: contain;
+            opacity: 0.05;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .navbar,
+        .title-box,
+        .members-row,
+        .extra-info {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* =========================
+           NAVBAR
+        ========================= */
+        .navbar {
+            background: var(--dark);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            box-shadow: 0 2px 6px rgba(0, 20, 40, 0.4);
+        }
+
+        .navbar a {
+            color: #cbd5e1;
+            text-decoration: none;
+            font-size: 14px;
+            padding: 6px 12px;
+            border-radius: 6px;
+            transition: 0.15s ease;
+        }
+
+        .navbar a:hover {
+            background: #334155;
+            color: white;
+        }
+
+        .navbar .active {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* =========================
+           TITLE
+        ========================= */
+        .title-box {
+            margin-top: 30px;
+            text-align: center;
+            padding: 0 20px;
+        }
+
+        .title-box h1 {
+            font-size: clamp(26px, 5vw, 42px);
+            color: var(--dark);
+            margin-bottom: 10px;
+        }
+
+        .title-box p {
+            font-size: clamp(14px, 2.5vw, 18px);
+            color: var(--text);
+            margin-bottom: 40px;
+        }
+
+        /* =========================
+           MEMBERS
+        ========================= */
+        .members-row {
+            display: flex;
+            flex-direction: column; /* mobile first */
+            align-items: center;
+            gap: 40px;
+            margin: 40px 0;
+            padding: 0 20px;
+        }
+
+        .member {
+            text-align: center;
+        }
+
+        .member img {
+            width: 160px;
+            height: 160px;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 3px solid var(--primary);
+            box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+            transition: 0.2s;
+        }
+
+        .member img:hover {
+            transform: scale(1.05);
+        }
+
+        .member-name {
+            margin-top: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        /* =========================
+           EXTRA INFO
+        ========================= */
+        .extra-info {
+            width: 90%;
+            margin: 0 auto;
+            padding-bottom: 60px;
+            text-align: center;
+            color: var(--text);
+            font-size: 16px;
+        }
+
+        /* =========================
+           TABLET
+        ========================= */
+        @media (min-width: 600px) {
+            .members-row {
+                flex-direction: row;
+                justify-content: center;
+                gap: 80px;
+            }
+
+            .member img {
+                width: 180px;
+                height: 180px;
+            }
+        }
+
+        /* =========================
+           DESKTOP
+        ========================= */
+        @media (min-width: 900px) {
+            .members-row {
+                gap: 140px;
+                margin: 80px 0;
+            }
+
+            .member img {
+                width: 220px;
+                height: 220px;
+            }
+
+            .navbar {
+                justify-content: flex-start;
+                padding-left: 30px;
+            }
+
+            .navbar a {
+                font-size: 16px;
+            }
+        }
+
+    </style>
+</head>
+
+<body>
+
+<!-- NAVBAR -->
+<div class="navbar">
+    <a href="/home" class="active">Home Page</a>
+    <a href="/dashboard">Dashboard</a>
+</div>
+
+<!-- TITLE -->
+<div class="title-box">
+    <h1>Trabajo Final de Grado</h1>
+    <p>Facultad de Ingeniería, Universidad Nacional de Asunción.</p>
+</div>
+
+<!-- MEMBERS -->
+<div class="members-row">
+
+    <div class="member">
+        <img src="/static/members/Lucas2.jpg" alt="Lucas Pin">
+        <div class="member-name">Lucas Pin</div>
+    </div>
+
+    <div class="member">
+        <img src="/static/members/Matteo.jpg" alt="Matteo Martinez">
+        <div class="member-name">Matteo Martinez</div>
+    </div>
+
+</div>
+
+<!-- EXTRA -->
+<div class="extra-info">
+    <!-- future content -->
+</div>
+
+</body>
+</html>

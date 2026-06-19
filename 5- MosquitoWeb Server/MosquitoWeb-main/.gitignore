@@ -1,0 +1,34 @@
+# ── Python ──────────────────────────────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# ── Environment ────────────────────────────────────────────────────────────────
+.env
+.env.local
+
+# ── Local databases ────────────────────────────────────────────────────────────
+*.db
+*.sqlite
+
+# ── Large ML model weights (keep .onnx only if <100 MB; use Git LFS otherwise) ─
+models/*.pt
+models/*.pth
+# ONNX models are downloaded from Supabase at startup — do NOT commit them:
+models/*.onnx
+
+# ── Generated / cached artefacts ───────────────────────────────────────────────
+cache/
+figures/
+results_visual/
+
+# ── IDEs ───────────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.code-workspace
+
+# ── OS ─────────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db

@@ -1,0 +1,54 @@
+<div class="table-wrapper">
+<table>
+<thead>
+<tr>
+    <th>Cliente</th>
+    <th>Timestamp</th>
+    <th>Detections</th>
+    <th>Temp</th>
+    <th>Humidity</th>
+    <th>Imagen</th>
+</tr>
+</thead>
+
+<tbody>
+{% for row in rows %}
+{% set dets = row.detections | from_json %}
+<tr>
+
+<td>{{ row.client_id }}</td>
+<td>{{ row.timestamp }}</td>
+
+<td>
+{% if dets %}
+    {% for d in dets %}
+        {% set conf = d.confidence %}
+        <span class="badge
+            {% if conf > 0.75 %}conf-high
+            {% elif conf > 0.4 %}conf-mid
+            {% else %}conf-low
+            {% endif %}">
+            {{ d.class_name }} {{ (conf * 100)|round(1) }}%
+        </span>
+    {% endfor %}
+{% else %}
+    N/A
+{% endif %}
+</td>
+
+<td>{{ row.temperature }}</td>
+<td>{{ row.humidity }}</td>
+
+<td>
+{% if row.image_url %}
+    <img src="{{ row.image_url }}" class="table-img">
+{% else %}
+    N/A
+{% endif %}
+</td>
+
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
