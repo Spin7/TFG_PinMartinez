@@ -1,4 +1,4 @@
-# 🌐 MosquitoWeb Server
+# MosquitoWeb Server
 
 This folder contains the **FastAPI backend server** that acts as the central hub of the system — receiving data from IoT traps, running AI inference, serving the web dashboard, and exposing the ABM simulation results.
 

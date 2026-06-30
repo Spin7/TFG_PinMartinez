@@ -44,7 +44,7 @@ Egg/Larva → JUVENILE → ADULT_MALE
 - Scripts: `Generacion_del_gird.py`, `Simulacion_Agentes.py`
 - Produces population time series and saves results to `simulations_results/`.
 
-### V2 — Final Version (`Agent_simulationV2/`) ✅ *Used in Thesis*
+### V2 — Final Version (`Agent_simulationV2/`) 
 The production simulation. Fully modular, configurable via JSON.
 
 | File | Role |
